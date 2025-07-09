@@ -16,7 +16,7 @@ import {
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { useCurrentUser } from "../hooks/useApi";
+import { useCurrentUser, useChangePassword } from "../hooks/useApi";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import ProfilePicture from "../components/ui/ProfilePicture";
 
@@ -152,6 +152,8 @@ const SettingsPage: React.FC = () => {
     }
   }, [user]);
 
+  const changePassword = useChangePassword();
+
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "security", label: "Security", icon: Lock },
@@ -188,14 +190,17 @@ const SettingsPage: React.FC = () => {
         formData.append("profile_picture", tempProfilePicture);
       }
 
-      const response = await fetch("http://localhost:8000/api/users/profile/", {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          "X-Settings-Update": "true",
-        },
-        body: formData,
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/accounts/profile/",
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            "X-Settings-Update": "true",
+          },
+          body: formData,
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update profile");
@@ -231,15 +236,34 @@ const SettingsPage: React.FC = () => {
 
   const handleSecuritySubmit = async (data: SecurityFormData) => {
     setSaveStatus("saving");
-    console.log("Password change:", data);
-    // Replace with your actual API call
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    setSaveStatus("saved");
-    securityForm.reset();
-    setTimeout(() => setSaveStatus("idle"), 2000);
+    try {
+      await changePassword.mutateAsync({
+        old_password: data.currentPassword,
+        new_password: data.newPassword,
+        new_password_confirm: data.confirmPassword,
+      });
+      setSaveStatus("saved");
+      securityForm.reset();
+    } catch (error) {
+      setSaveStatus("error");
+      if (error instanceof Error) {
+        try {
+          const errorData = JSON.parse(error.message);
+          // Set form errors
+          Object.keys(errorData).forEach((key) => {
+            securityForm.setError(key as any, {
+              type: "manual",
+              message: errorData[key].join(" "),
+            });
+          });
+        } catch {
+          securityForm.setError("root", {
+            type: "manual",
+            message: error.message,
+          });
+        }
+      }
+    }
   };
 
   const handleNotificationChange = async (key: keyof NotificationSettings) => {
@@ -251,7 +275,7 @@ const SettingsPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/users/notifications/",
+        "http://localhost:8000/api/accounts/notifications/",
         {
           method: "PUT",
           headers: {
@@ -288,7 +312,7 @@ const SettingsPage: React.FC = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:8000/api/users/preferences/",
+        "http://localhost:8000/api/accounts/preferences/",
         {
           method: "PUT",
           headers: {

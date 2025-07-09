@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from accounts.serializers import RegisterSerializer, UserSerializer, LoginSerializer
+from accounts.serializers import RegisterSerializer, UserSerializer, LoginSerializer, PasswordChangeSerializer
 from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, permission_classes
 from datetime import timedelta
@@ -42,7 +42,8 @@ class LoginView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
-            user = authenticate(request, email=email, password=password)
+            # Pass both email as username and email to support both login methods
+            user = authenticate(request, username=email, email=email, password=password)
             remember_me = serializer.validated_data.get('remember_me', False)
             
             if user is not None:
@@ -62,6 +63,21 @@ class LoginView(APIView):
                 'error': 'Invalid credentials'
             }, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PasswordChangeView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+
+        return Response({'detail': 'Password successfully changed'}, status=status.HTTP_200_OK)
     
 
 @api_view(['GET'])
@@ -106,3 +122,4 @@ def user_profile(request):
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

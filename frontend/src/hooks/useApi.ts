@@ -31,13 +31,16 @@ export function useLogin() {
   return {
     mutateAsync: async (data: any) => {
       try {
-        const response = await fetch("http://localhost:8000/api/login/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
+        const response = await fetch(
+          "http://localhost:8000/api/accounts/login/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
@@ -69,13 +72,16 @@ export function useRegister() {
       setIsPending(true);
       setIsError(false);
       try {
-        const response = await fetch("http://localhost:8000/api/register/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        });
+        const response = await fetch(
+          "http://localhost:8000/api/accounts/register/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          }
+        );
         if (!response.ok) {
           const errorData = await response.json();
           console.error("Registration error details:", errorData);
@@ -158,5 +164,50 @@ export function useToggleFavorite() {
       console.log("Toggle favorite:", data);
       // Replace with your actual API call
     },
+  };
+}
+
+export function useChangePassword() {
+  const [isPending, setIsPending] = React.useState(false);
+  const [isError, setIsError] = React.useState(false);
+
+  return {
+    mutateAsync: async (data: {
+      old_password: string;
+      new_password: string;
+      new_password_confirm: string;
+    }) => {
+      setIsPending(true);
+      setIsError(false);
+      try {
+        const response = await fetch(
+          "http://localhost:8000/api/accounts/change-password/",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            },
+            body: JSON.stringify({
+              old_password: data.old_password,
+              new_password: data.new_password,
+              new_password_confirm: data.new_password_confirm,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          setIsError(true);
+          throw new Error(JSON.stringify(errorData));
+        }
+
+        return await response.json();
+      } finally {
+        setIsPending(false);
+      }
+    },
+    isPending,
+    isError,
   };
 }
