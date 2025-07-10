@@ -24,12 +24,15 @@ const Header: React.FC = () => {
         setUserLoading(true);
         setUserError(null);
 
-        const response = await fetch("http://localhost:8000/api/user/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        const response = await fetch(
+          "http://localhost:8000/api/accounts/profile/",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();

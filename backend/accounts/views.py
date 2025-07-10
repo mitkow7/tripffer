@@ -17,7 +17,6 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        print("Registration data received:", request.data)  # Debug print
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -27,7 +26,6 @@ class RegisterView(APIView):
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
             }, status=status.HTTP_201_CREATED)
-        print("Registration validation errors:", serializer.errors)  # Debug print
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
@@ -78,16 +76,6 @@ class PasswordChangeView(APIView):
         user.save()
 
         return Response({'detail': 'Password successfully changed'}, status=status.HTTP_200_OK)
-    
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user(request):
-    """
-    View to get the authenticated user's details.
-    """
-    serializer = UserSerializer(request.user, context={'request': request})
-    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PUT'])

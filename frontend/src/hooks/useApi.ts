@@ -107,11 +107,14 @@ export function useCurrentUser() {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch("http://localhost:8000/api/user/", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/accounts/profile/",
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          },
+        }
+      );
       if (!response.ok) {
         throw new Error("Failed to fetch user data");
       }
