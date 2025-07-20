@@ -40,7 +40,6 @@ const RegisterPage: React.FC = () => {
       });
       navigate("/login");
     } catch (error) {
-      console.error("Registration failed:", error);
       if (error instanceof Error) {
         try {
           const errorData = JSON.parse(error.message);

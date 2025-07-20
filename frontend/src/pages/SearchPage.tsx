@@ -1,179 +1,147 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Filter, SortAsc, SortDesc } from 'lucide-react';
-import SearchForm from '../components/features/SearchForm';
-import TripGrid from '../components/features/TripGrid';
-import Button from '../components/ui/Button';
-import { SearchFilters } from '../types/api';
+import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import { HotelOffer } from "../types/api";
+import HotelSearch from "../components/features/HotelSearch";
+import HotelCardSkeleton from "../components/features/HotelCardSkeleton";
+import SearchResults from "../components/features/SearchResults";
 
 const SearchPage: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'price' | 'rating' | 'duration'>('price');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [hotels, setHotels] = useState<HotelOffer[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [nights, setNights] = useState(0);
 
-  // Parse URL params to get initial filters
-  const getInitialFilters = (): SearchFilters => {
+  const handleSearch = async (searchParams: {
+    cityCode: string;
+    checkIn: string;
+    checkOut: string;
+    adults: number;
+    rooms: number;
+    currency: string;
+    nights: number;
+  }) => {
+    setIsLoading(true);
+    setError(null);
+    setHotels([]);
+    setHasSearched(true);
+    setNights(searchParams.nights);
+
+    try {
+      const response = await axios.get("/api/hotels/search/", {
+        params: {
+          city_code: searchParams.cityCode,
+          check_in: searchParams.checkIn,
+          check_out: searchParams.checkOut,
+          adults: searchParams.adults,
+          rooms: searchParams.rooms,
+          currency: searchParams.currency,
+          roomQuantity: 1, // Defaulting to 1 room
+        },
+      });
+      setHotels(response.data);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.error ||
+          "Failed to fetch hotel offers. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const destination = params.get("destination");
+    const checkIn = params.get("checkIn");
+    const checkOut = params.get("checkOut");
+    const adults = params.get("adults");
+
+    if (destination && checkIn && checkOut && adults) {
+      const calculatedNights = calculateNights(checkIn, checkOut);
+      handleSearch({
+        cityCode: destination,
+        checkIn: checkIn,
+        checkOut: checkOut,
+        adults: parseInt(adults),
+        rooms: 1,
+        currency: "EUR",
+        nights: calculatedNights,
+      });
+    }
+  }, [location.search]);
+
+  const initialSearchValues = () => {
     const params = new URLSearchParams(location.search);
     return {
-      destination: params.get('destination') || '',
-      startDate: params.get('startDate') || '',
-      endDate: params.get('endDate') || '',
-      budget: {
-        min: Number(params.get('budgetMin')) || 0,
-        max: Number(params.get('budgetMax')) || 5000,
-      },
-      travelType: params.get('travelType')?.split(',') || [],
-      duration: {
-        min: Number(params.get('durationMin')) || 1,
-        max: Number(params.get('durationMax')) || 30,
-      },
+      cityCode: params.get("destination") || "",
+      checkIn: params.get("checkIn") || "",
+      checkOut: params.get("checkOut") || "",
+      adults: parseInt(params.get("adults") || "1"),
     };
   };
 
-  const [filters, setFilters] = useState<SearchFilters>(getInitialFilters());
-
-  // Replace these with your actual API calls
-  const trips = [];
-  const favorites = [];
-  const isLoading = false;
-  const error = null;
-
-  // Sort trips based on selected criteria
-  const sortedTrips = [...trips].sort((a, b) => {
-    let aValue: number;
-    let bValue: number;
-
-    switch (sortBy) {
-      case 'price':
-        aValue = a.price;
-        bValue = b.price;
-        break;
-      case 'rating':
-        aValue = a.rating;
-        bValue = b.rating;
-        break;
-      case 'duration':
-        aValue = a.duration;
-        bValue = b.duration;
-        break;
-      default:
-        aValue = a.price;
-        bValue = b.price;
-    }
-
-    return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-  });
-
-  const handleSearch = (newFilters: SearchFilters) => {
-    setFilters(newFilters);
-    
-    // Update URL params
-    const params = new URLSearchParams();
-    if (newFilters.destination) params.set('destination', newFilters.destination);
-    if (newFilters.startDate) params.set('startDate', newFilters.startDate);
-    if (newFilters.endDate) params.set('endDate', newFilters.endDate);
-    if (newFilters.budget.min) params.set('budgetMin', newFilters.budget.min.toString());
-    if (newFilters.budget.max) params.set('budgetMax', newFilters.budget.max.toString());
-    if (newFilters.travelType.length) params.set('travelType', newFilters.travelType.join(','));
-    if (newFilters.duration.min) params.set('durationMin', newFilters.duration.min.toString());
-    if (newFilters.duration.max) params.set('durationMax', newFilters.duration.max.toString());
-    
-    navigate(`/search?${params.toString()}`, { replace: true });
-  };
-
-  const handleSortChange = (newSortBy: 'price' | 'rating' | 'duration') => {
-    if (sortBy === newSortBy) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(newSortBy);
-      setSortOrder('asc');
-    }
-  };
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h2>
-            <p className="text-gray-600 mb-8">Please try again later</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
+      <HotelSearch
+        onSearch={handleSearch}
+        initialValues={initialSearchValues()}
+        loading={isLoading}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Search Results</h1>
-          <p className="text-gray-600">
-            {trips.length} trips found{filters.destination && ` for "${filters.destination}"`}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8">
-              <div className="flex items-center justify-between mb-4 lg:hidden">
-                <h2 className="text-lg font-semibold">Filters</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                >
-                  <Filter className="w-4 h-4 mr-2" />
-                  {showFilters ? 'Hide' : 'Show'} Filters
-                </Button>
-              </div>
-              
-              <div className={`${showFilters ? 'block' : 'hidden'} lg:block`}>
-                <SearchForm
-                  onSearch={handleSearch}
-                  initialFilters={filters}
-                  loading={isLoading}
-                />
-              </div>
-            </div>
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <HotelCardSkeleton />
+            <HotelCardSkeleton />
+            <HotelCardSkeleton />
           </div>
+        )}
 
-          {/* Results */}
-          <div className="lg:col-span-3">
-            {/* Sort Controls */}
-            <div className="flex items-center justify-between mb-6 p-4 bg-white rounded-lg shadow-sm">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm font-medium text-gray-700">Sort by:</span>
-                <div className="flex space-x-2">
-                  {['price', 'rating', 'duration'].map((option) => (
-                    <Button
-                      key={option}
-                      variant={sortBy === option ? 'primary' : 'outline'}
-                      size="sm"
-                      onClick={() => handleSortChange(option as 'price' | 'rating' | 'duration')}
-                    >
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
-                      {sortBy === option && (
-                        sortOrder === 'asc' ? <SortAsc className="w-4 h-4 ml-1" /> : <SortDesc className="w-4 h-4 ml-1" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Trip Grid */}
-            <TripGrid trips={sortedTrips} loading={isLoading} favorites={favorites} />
+        {error && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-red-600">
+              Something went wrong
+            </h2>
+            <p className="mt-2 text-gray-600">{error}</p>
           </div>
-        </div>
+        )}
+
+        {!isLoading && !error && hotels.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {hotels.map((hotel) => (
+              <SearchResults key={hotel.id} hotel={hotel} nights={nights} />
+            ))}
+          </div>
+        )}
+
+        {!isLoading && !error && hasSearched && hotels.length === 0 && (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-700">
+              No hotels found
+            </h2>
+            <p className="mt-2 text-gray-500">
+              We couldn't find any hotels matching your criteria. Please try a
+              different search.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
+};
+
+const calculateNights = (checkIn: string, checkOut: string): number => {
+  if (!checkIn || !checkOut) {
+    return 0;
+  }
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
+    return 0;
+  }
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 };
 
 export default SearchPage;

@@ -10,7 +10,13 @@ export interface Trip {
   rating: number;
   reviewCount: number;
   highlights: string[];
-  category: 'adventure' | 'cultural' | 'relaxation' | 'family' | 'luxury' | 'budget';
+  category:
+    | "adventure"
+    | "cultural"
+    | "relaxation"
+    | "family"
+    | "luxury"
+    | "budget";
   departureDate: string;
   returnDate: string;
   availableSpots: number;
@@ -29,7 +35,7 @@ export interface SearchFilters {
     min: number;
     max: number;
   };
-  travelType: string[];
+  travelType?: string[];
   duration: {
     min: number;
     max: number;
@@ -53,7 +59,7 @@ export interface Booking {
   id: string;
   tripId: string;
   trip: Trip;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   bookingDate: string;
   totalPrice: number;
   travelers: number;
@@ -68,5 +74,49 @@ export interface ApiResponse<T> {
     total: number;
     page: number;
     limit: number;
+  };
+}
+
+export interface HotelOffer {
+  id: string;
+  name: string;
+  rating: number | null;
+  address: {
+    lines: string[];
+    postalCode: string;
+    cityName: string;
+    countryCode: string;
+  };
+  amenities: string[];
+  offers: Array<{
+    id: string;
+    room_type: string;
+    description: string;
+    price: {
+      total: string;
+      currency: string;
+    };
+    policies?: {
+      cancellations?: Array<{
+        deadline: string;
+        amount: string;
+      }>;
+    };
+  }>;
+}
+
+export interface Offer {
+  id: string;
+  room_type: string;
+  description: string;
+  price: {
+    total: string;
+    currency: string;
+  };
+  policies?: {
+    cancellations?: Array<{
+      deadline: string;
+      amount: string;
+    }>;
   };
 }

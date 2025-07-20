@@ -297,7 +297,7 @@ const SettingsPage: React.FC = () => {
         throw new Error("Failed to update notification settings");
       }
     } catch (error) {
-      console.error("Failed to update notification settings:", error);
+      // console.error("Failed to update notification settings:", error);
     }
   };
 
@@ -327,7 +327,7 @@ const SettingsPage: React.FC = () => {
         throw new Error("Failed to update preferences");
       }
     } catch (error) {
-      console.error("Failed to update preferences:", error);
+      // console.error("Failed to update preferences:", error);
     }
   };
 
@@ -337,7 +337,7 @@ const SettingsPage: React.FC = () => {
         "Are you sure you want to delete your account? This action cannot be undone."
       )
     ) {
-      console.log("Delete account requested");
+      // console.log("Delete account requested");
       // Replace with your actual API call
     }
   };

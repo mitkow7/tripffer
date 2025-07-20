@@ -42,7 +42,6 @@ const Header: React.FC = () => {
         } else {
           setUser(null);
           setUserLoading(false);
-          setUserError("Not authenticated");
         }
       } catch (err) {
         setUser(null);
