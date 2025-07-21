@@ -12,6 +12,11 @@ interface RegisterFormData {
   email: string;
   password: string;
   confirmPassword: string;
+  role: string;
+  hotelName?: string;
+  address?: string;
+  website?: string;
+  description?: string;
 }
 
 const RegisterPage: React.FC = () => {
@@ -26,18 +31,32 @@ const RegisterPage: React.FC = () => {
   const registerMutation = useRegister();
 
   const password = watch("password");
+  const role = watch("role");
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setError(null);
-      await registerMutation.mutateAsync({
+
+      const registrationData: any = {
         email: data.email,
-        username: data.email, // Using email as username
+        username: data.email,
         first_name: data.firstName,
         last_name: data.lastName,
         password: data.password,
         password_confirm: data.confirmPassword,
-      });
+        role: data.role,
+      };
+
+      if (data.role === "HOTEL") {
+        registrationData.hotel_profile = {
+          hotel_name: data.hotelName,
+          address: data.address,
+          website: data.website,
+          description: data.description,
+        };
+      }
+
+      await registerMutation.mutateAsync(registrationData);
       navigate("/login");
     } catch (error) {
       if (error instanceof Error) {
@@ -165,6 +184,58 @@ const RegisterPage: React.FC = () => {
             error={errors.confirmPassword?.message}
             icon={<Lock className="w-5 h-5 text-gray-400" />}
           />
+
+          <div>
+            <label
+              htmlFor="role"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Register as
+            </label>
+            <select
+              id="role"
+              {...register("role")}
+              className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+              defaultValue="USER"
+            >
+              <option value="USER">User</option>
+              <option value="HOTEL">Hotel</option>
+            </select>
+          </div>
+
+          {role === "HOTEL" && (
+            <>
+              <Input
+                label="Hotel Name"
+                {...register("hotelName", {
+                  required: "Hotel name is required",
+                })}
+                error={errors.hotelName?.message}
+                icon={<User className="w-5 h-5 text-gray-400" />}
+              />
+              <Input
+                label="Address"
+                {...register("address", {
+                  required: "Address is required",
+                })}
+                error={errors.address?.message}
+                icon={<User className="w-5 h-5 text-gray-400" />}
+              />
+              <Input
+                label="Website (Optional)"
+                type="url"
+                {...register("website")}
+                error={errors.website?.message}
+                icon={<User className="w-5 h-5 text-gray-400" />}
+              />
+              <Input
+                label="Description (Optional)"
+                {...register("description")}
+                error={errors.description?.message}
+                icon={<User className="w-5 h-5 text-gray-400" />}
+              />
+            </>
+          )}
 
           <Button
             type="submit"

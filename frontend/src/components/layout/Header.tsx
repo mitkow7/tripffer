@@ -129,21 +129,27 @@ const Header: React.FC = () => {
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
                     <Link
-                      to="/dashboard"
+                      to={
+                        user?.role === "HOTEL"
+                          ? "/hotel-dashboard"
+                          : "/dashboard"
+                      }
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <User className="w-4 h-4" />
                       <span>Dashboard</span>
                     </Link>
-                    <Link
-                      to="/favorites"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Heart className="w-4 h-4" />
-                      <span>Favorites</span>
-                    </Link>
+                    {user?.role !== "HOTEL" && (
+                      <Link
+                        to="/favorites"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Heart className="w-4 h-4" />
+                        <span>Favorites</span>
+                      </Link>
+                    )}
                     <Link
                       to="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"

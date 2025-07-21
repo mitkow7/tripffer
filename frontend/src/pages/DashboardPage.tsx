@@ -1,129 +1,206 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Calendar, Heart, Settings, CreditCard, MapPin, Clock } from 'lucide-react';
-import Card from '../components/ui/Card';
-import Button from '../components/ui/Button';
-import LoadingSpinner from '../components/ui/LoadingSpinner';
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Calendar,
+  Heart,
+  Settings,
+  CreditCard,
+  MapPin,
+  Clock,
+  User as UserIcon,
+} from "lucide-react";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
+import { useCurrentUser, useUserBookings, useFavorites } from "../hooks/useApi";
+import { Booking, Favorite } from "../types";
 
 const DashboardPage: React.FC = () => {
-  // Replace these with your actual API calls
-  const user = null;
-  const bookings = [];
-  const favorites = [];
-  const bookingsLoading = false;
-  const favoritesLoading = false;
+  const { user, isLoading: userLoading } = useCurrentUser();
+  const { data: bookingsData, isLoading: bookingsLoading } = useUserBookings();
+  const { data: favoritesData, isLoading: favoritesLoading } = useFavorites();
 
-  const upcomingBookings = bookings.filter(booking => 
-    new Date(booking.trip.departureDate) > new Date() && booking.status === 'confirmed'
+  const bookings: Booking[] = bookingsData?.data || [];
+  const favorites: Favorite[] = favoritesData?.data || [];
+
+  const upcomingBookings = bookings.filter(
+    (booking) =>
+      new Date(booking.trip.departureDate) > new Date() &&
+      booking.status === "confirmed"
   );
 
-  const pastBookings = bookings.filter(booking => 
-    new Date(booking.trip.returnDate) < new Date() && booking.status === 'completed'
+  const pastBookings = bookings.filter(
+    (booking) =>
+      new Date(booking.trip.returnDate) < new Date() &&
+      booking.status === "completed"
+  );
+
+  const StatCard = ({
+    icon,
+    title,
+    value,
+    color,
+  }: {
+    icon: React.ReactElement;
+    title: string;
+    value: string | number | React.ReactElement;
+    color: string;
+  }) => (
+    <Card className="p-6 transform transition-transform duration-300 hover:scale-105">
+      <div className="flex items-center">
+        <div className={`p-3 bg-${color}-100 rounded-full`}>
+          {React.cloneElement(icon, { className: `w-6 h-6 text-${color}-600` })}
+        </div>
+        <div className="ml-4">
+          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        </div>
+      </div>
+    </Card>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back!
-          </h1>
-          <p className="text-gray-600">Manage your trips and explore new destinations</p>
+        <div className="flex justify-between items-center mb-12">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">
+              Welcome back, {user?.first_name || "there"}!
+            </h1>
+            <p className="text-gray-600">
+              Here's your travel summary at a glance.
+            </p>
+          </div>
+          <div className="flex items-center">
+            <Link to="/settings" className="mr-4">
+              {user?.profile?.profile_picture ? (
+                <img
+                  src={user.profile.profile_picture}
+                  alt="Profile"
+                  className="w-12 h-12 rounded-full object-cover shadow-sm"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-gray-500" />
+                </div>
+              )}
+            </Link>
+            <Link to="/search">
+              <Button>Explore Trips</Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-blue-100 rounded-full">
-                <Calendar className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Upcoming Trips</p>
-                <p className="text-2xl font-bold text-gray-900">{upcomingBookings.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-green-100 rounded-full">
-                <MapPin className="w-6 h-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Completed Trips</p>
-                <p className="text-2xl font-bold text-gray-900">{pastBookings.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-red-100 rounded-full">
-                <Heart className="w-6 h-6 text-red-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Saved Trips</p>
-                <p className="text-2xl font-bold text-gray-900">{favorites.length}</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center">
-              <div className="p-3 bg-purple-100 rounded-full">
-                <CreditCard className="w-6 h-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm text-gray-600">Total Spent</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  ${bookings.reduce((sum, booking) => sum + booking.totalPrice, 0).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <StatCard
+            icon={<Calendar />}
+            title="Upcoming Trips"
+            value={
+              userLoading || bookingsLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                upcomingBookings.length
+              )
+            }
+            color="blue"
+          />
+          <StatCard
+            icon={<MapPin />}
+            title="Completed Trips"
+            value={
+              userLoading || bookingsLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                pastBookings.length
+              )
+            }
+            color="green"
+          />
+          <StatCard
+            icon={<Heart />}
+            title="Saved Trips"
+            value={
+              userLoading || favoritesLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                favorites.length
+              )
+            }
+            color="red"
+          />
+          <StatCard
+            icon={<CreditCard />}
+            title="Total Spent"
+            value={
+              userLoading || bookingsLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                `$${bookings
+                  .reduce((sum, booking) => sum + booking.totalPrice, 0)
+                  .toLocaleString()}`
+              )
+            }
+            color="purple"
+          />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Upcoming Trips */}
-          <Card className="p-6">
+          <Card className="p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Upcoming Trips</h2>
+              <h2 className="text-2xl font-semibold text-gray-800">
+                Upcoming Adventures
+              </h2>
               <Link to="/bookings">
-                <Button variant="outline" size="sm">View All</Button>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
               </Link>
             </div>
 
             {bookingsLoading ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-12">
                 <LoadingSpinner />
               </div>
             ) : upcomingBookings.length > 0 ? (
               <div className="space-y-4">
-                {upcomingBookings.slice(0, 3).map((booking) => (
-                  <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
+                {upcomingBookings.slice(0, 3).map((booking: Booking) => (
+                  <Card
+                    key={booking.id}
+                    hover
+                    className="p-4 transition-shadow"
+                  >
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{booking.trip.title}</h3>
-                      <span className="text-sm text-blue-600 font-medium">${booking.totalPrice}</span>
+                      <h3 className="font-semibold text-gray-800">
+                        {booking.trip.title}
+                      </h3>
+                      <span className="text-sm text-blue-600 font-bold">
+                        ${booking.totalPrice}
+                      </span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <MapPin className="w-4 h-4 mr-1" />
+                    <div className="flex items-center text-sm text-gray-500 mb-2">
+                      <MapPin className="w-4 h-4 mr-2" />
                       {booking.trip.destination}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Clock className="w-4 h-4 mr-1" />
-                      {new Date(booking.trip.departureDate).toLocaleDateString()} - {new Date(booking.trip.returnDate).toLocaleDateString()}
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {new Date(
+                        booking.trip.departureDate
+                      ).toLocaleDateString()}{" "}
+                      - {new Date(booking.trip.returnDate).toLocaleDateString()}
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No upcoming trips</p>
+              <div className="text-center py-12 text-gray-500">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold">No upcoming trips</h3>
+                <p className="mb-4">It's time to plan your next journey!</p>
                 <Link to="/search">
-                  <Button className="mt-4">Browse Trips</Button>
+                  <Button>Browse Trips</Button>
                 </Link>
               </div>
             )}
@@ -132,74 +209,55 @@ const DashboardPage: React.FC = () => {
           {/* Favorite Trips */}
           <Card className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Saved Trips</h2>
+              <h2 className="text-2xl font-semibold text-gray-800">Wishlist</h2>
               <Link to="/favorites">
-                <Button variant="outline" size="sm">View All</Button>
+                <Button variant="outline" size="sm">
+                  View All
+                </Button>
               </Link>
             </div>
 
             {favoritesLoading ? (
-              <div className="flex justify-center py-8">
+              <div className="flex justify-center py-12">
                 <LoadingSpinner />
               </div>
             ) : favorites.length > 0 ? (
               <div className="space-y-4">
-                {favorites.slice(0, 3).map((trip) => (
-                  <div key={trip.id} className="border border-gray-200 rounded-lg p-4">
+                {favorites.slice(0, 3).map((trip: Favorite) => (
+                  <Card key={trip.id} hover className="p-4 transition-shadow">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{trip.title}</h3>
-                      <span className="text-sm text-blue-600 font-medium">${trip.price}</span>
+                      <h3 className="font-semibold text-gray-800">
+                        {trip.trip.title}
+                      </h3>
+                      <span className="text-sm text-blue-600 font-bold">
+                        ${trip.trip.price}
+                      </span>
                     </div>
-                    <div className="flex items-center text-sm text-gray-600 mb-2">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      {trip.destination}
+                    <div className="flex items-center text-sm text-gray-500 mb-2">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {trip.trip.destination}
                     </div>
-                    <Link to={`/trips/${trip.id}`}>
-                      <Button size="sm" variant="outline">View Details</Button>
+                    <Link to={`/trips/${trip.trip.id}`}>
+                      <Button size="sm" variant="outline" className="w-full">
+                        View Details
+                      </Button>
                     </Link>
-                  </div>
+                  </Card>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                <Heart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>No saved trips yet</p>
+              <div className="text-center py-12 text-gray-500">
+                <Heart className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-lg font-semibold">
+                  Your wishlist is empty
+                </h3>
+                <p className="mb-4">Add trips you'd like to book someday.</p>
                 <Link to="/search">
-                  <Button className="mt-4">Discover Trips</Button>
+                  <Button>Discover Trips</Button>
                 </Link>
               </div>
             )}
           </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Link to="/search">
-              <Card hover className="p-6 text-center">
-                <MapPin className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                <h3 className="font-medium text-gray-900">Search Trips</h3>
-                <p className="text-sm text-gray-600">Find your next adventure</p>
-              </Card>
-            </Link>
-
-            <Link to="/bookings">
-              <Card hover className="p-6 text-center">
-                <Calendar className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                <h3 className="font-medium text-gray-900">Manage Bookings</h3>
-                <p className="text-sm text-gray-600">View and update your trips</p>
-              </Card>
-            </Link>
-
-            <Link to="/settings">
-              <Card hover className="p-6 text-center">
-                <Settings className="w-8 h-8 mx-auto mb-2 text-gray-600" />
-                <h3 className="font-medium text-gray-900">Account Settings</h3>
-                <p className="text-sm text-gray-600">Update your preferences</p>
-              </Card>
-            </Link>
-          </div>
         </div>
       </div>
     </div>

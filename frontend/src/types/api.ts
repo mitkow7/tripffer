@@ -77,32 +77,21 @@ export interface ApiResponse<T> {
   };
 }
 
-export interface HotelOffer {
+export interface Hotel {
   id: string;
   name: string;
-  rating: number | null;
-  address: {
-    lines: string[];
-    postalCode: string;
-    cityName: string;
-    countryCode: string;
+  stars: number;
+  price: number;
+  location: {
+    lon: number;
+    lat: number;
+    name?: string;
   };
+  photo_url: string | null;
+  address: string;
+  guestScore: number;
+  distance_to_center: number;
   amenities: string[];
-  offers: Array<{
-    id: string;
-    room_type: string;
-    description: string;
-    price: {
-      total: string;
-      currency: string;
-    };
-    policies?: {
-      cancellations?: Array<{
-        deadline: string;
-        amount: string;
-      }>;
-    };
-  }>;
 }
 
 export interface Offer {

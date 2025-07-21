@@ -13,6 +13,7 @@ import TripDetailsPage from "./pages/TripDetailsPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
 import ContactPage from "./pages/ContactPage";
 import SettingsPage from "./pages/SettingsPage";
+import HotelDashboardPage from "./pages/HotelDashboardPage";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
               <Route path="/help" element={<HelpCenterPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/hotel-dashboard" element={<HotelDashboardPage />} />
             </Routes>
           </main>
           <Footer />

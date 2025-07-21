@@ -27,8 +27,12 @@ const LoginPage: React.FC = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await loginMutation.mutateAsync(data);
-      navigate("/dashboard");
+      const response = await loginMutation.mutateAsync(data);
+      if (response.user.role === "HOTEL") {
+        navigate("/hotel-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
       // Reload the page to update the header
       window.location.reload();
     } catch (error) {

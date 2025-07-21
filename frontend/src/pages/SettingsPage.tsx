@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import {
   User,
   Mail,
@@ -18,15 +18,26 @@ import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import { useCurrentUser, useChangePassword } from "../hooks/useApi";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
-import ProfilePicture from "../components/ui/ProfilePicture";
+import UserProfileSettings from "../components/UserProfileSettings";
+import HotelProfileSettings from "../components/HotelProfileSettings";
 
-interface ProfileFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  dateOfBirth: string;
-  bio: string;
+interface FormData {
+  // User fields
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  dateOfBirth?: string;
+  bio?: string;
+  // Hotel fields
+  hotelName?: string;
+  address?: string;
+  website?: string;
+  pricePerNight?: number;
+  availabilityStartDate?: string;
+  availabilityEndDate?: string;
+  features?: string;
+  description?: string;
 }
 
 interface SecurityFormData {
@@ -62,15 +73,13 @@ const SettingsPage: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
-  const [tempProfilePicture, setTempProfilePicture] = useState<File | null>(
-    null
-  );
+  const [tempProfileImages, setTempProfileImages] = useState<File[]>([]);
   const [tempProfilePictureUrl, setTempProfilePictureUrl] = useState<
     string | undefined
   >(undefined);
 
   // Form hooks
-  const profileForm = useForm<ProfileFormData>({
+  const methods = useForm<FormData>({
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -78,25 +87,47 @@ const SettingsPage: React.FC = () => {
       phone: "",
       dateOfBirth: "",
       bio: "",
+      hotelName: "",
+      address: "",
+      website: "",
+      pricePerNight: 0,
+      availabilityStartDate: "",
+      availabilityEndDate: "",
+      features: "",
+      description: "",
     },
   });
 
   // Update form with user data when it's loaded
   useEffect(() => {
     if (user) {
-      profileForm.reset({
-        firstName: user.first_name || "",
-        lastName: user.last_name || "",
-        email: user.email || "",
-        phone: user.profile?.phone_number || "",
-        dateOfBirth: user.profile?.date_of_birth || "",
-        bio: user.profile?.bio || "",
-      });
+      if (user.role === "HOTEL") {
+        methods.reset({
+          hotelName: user.hotel_profile?.hotel_name || "",
+          address: user.hotel_profile?.address || "",
+          website: user.hotel_profile?.website || "",
+          pricePerNight: user.hotel_profile?.price_per_night || 0,
+          availabilityStartDate:
+            user.hotel_profile?.availability_start_date || "",
+          availabilityEndDate: user.hotel_profile?.availability_end_date || "",
+          features: user.hotel_profile?.features || "",
+          description: user.hotel_profile?.description || "",
+        });
+      } else {
+        methods.reset({
+          firstName: user.first_name || "",
+          lastName: user.last_name || "",
+          email: user.email || "",
+          phone: user.profile?.phone_number || "",
+          dateOfBirth: user.profile?.date_of_birth || "",
+          bio: user.profile?.bio || "",
+        });
+      }
       // Reset temp profile picture when user data changes
-      setTempProfilePicture(null);
+      setTempProfileImages([]);
       setTempProfilePictureUrl(undefined);
     }
-  }, [user]);
+  }, [user, methods]);
 
   const securityForm = useForm<SecurityFormData>();
 
@@ -162,32 +193,52 @@ const SettingsPage: React.FC = () => {
     { id: "privacy", label: "Privacy", icon: Shield },
   ];
 
-  const handleImageChange = (file: File) => {
-    // Create a preview URL for the new image
-    const url = URL.createObjectURL(file);
-    // Clean up previous temp URL if it exists
-    if (tempProfilePictureUrl) {
-      URL.revokeObjectURL(tempProfilePictureUrl);
+  const handleImageChange = (files: FileList | null) => {
+    if (files) {
+      setTempProfileImages(Array.from(files));
     }
-    setTempProfilePicture(file);
-    setTempProfilePictureUrl(url);
   };
 
-  const handleProfileSubmit = async (data: ProfileFormData) => {
+  const handleProfileSubmit = async (data: FormData) => {
     setSaveStatus("saving");
     try {
       // Create FormData object to handle file upload
       const formData = new FormData();
-      formData.append("first_name", data.firstName);
-      formData.append("last_name", data.lastName);
-      formData.append("email", data.email);
-      formData.append("profile.phone_number", data.phone || "");
-      formData.append("profile.date_of_birth", data.dateOfBirth || "");
-      formData.append("profile.bio", data.bio || "");
+
+      if (user.role === "HOTEL") {
+        formData.append("hotel_profile.hotel_name", data.hotelName || "");
+        formData.append("hotel_profile.address", data.address || "");
+        formData.append("hotel_profile.website", data.website || "");
+        formData.append(
+          "hotel_profile.price_per_night",
+          data.pricePerNight?.toString() || ""
+        );
+        formData.append(
+          "hotel_profile.availability_start_date",
+          data.availabilityStartDate || ""
+        );
+        formData.append(
+          "hotel_profile.availability_end_date",
+          data.availabilityEndDate || ""
+        );
+        formData.append("hotel_profile.features", data.features || "");
+        formData.append("hotel_profile.description", data.description || "");
+      } else {
+        formData.append("first_name", data.firstName || "");
+        formData.append("last_name", data.lastName || "");
+        formData.append("email", data.email || "");
+        formData.append("profile.phone_number", data.phone || "");
+        formData.append("profile.date_of_birth", data.dateOfBirth || "");
+        formData.append("profile.bio", data.bio || "");
+      }
 
       // Add profile picture if one was selected
-      if (tempProfilePicture) {
-        formData.append("profile_picture", tempProfilePicture);
+      if (user.role === "HOTEL" && tempProfileImages.length > 0) {
+        tempProfileImages.forEach((file) => {
+          formData.append("images", file);
+        });
+      } else if (tempProfileImages.length > 0) {
+        formData.append("profile_picture", tempProfileImages[0]);
       }
 
       const response = await fetch(
@@ -207,20 +258,35 @@ const SettingsPage: React.FC = () => {
       }
 
       const updatedData = await response.json();
-      profileForm.reset({
-        firstName: updatedData.first_name,
-        lastName: updatedData.last_name,
-        email: updatedData.email,
-        phone: updatedData.profile?.phone_number || "",
-        dateOfBirth: updatedData.profile?.date_of_birth || "",
-        bio: updatedData.profile?.bio || "",
-      });
+      if (user.role === "HOTEL") {
+        methods.reset({
+          hotelName: updatedData.hotel_profile?.hotel_name || "",
+          address: updatedData.hotel_profile?.address || "",
+          website: updatedData.hotel_profile?.website || "",
+          pricePerNight: updatedData.hotel_profile?.price_per_night || 0,
+          availabilityStartDate:
+            updatedData.hotel_profile?.availability_start_date || "",
+          availabilityEndDate:
+            updatedData.hotel_profile?.availability_end_date || "",
+          features: updatedData.hotel_profile?.features || "",
+          description: updatedData.hotel_profile?.description || "",
+        });
+      } else {
+        methods.reset({
+          firstName: updatedData.first_name,
+          lastName: updatedData.last_name,
+          email: updatedData.email,
+          phone: updatedData.profile?.phone_number || "",
+          dateOfBirth: updatedData.profile?.date_of_birth || "",
+          bio: updatedData.profile?.bio || "",
+        });
+      }
 
       // Clear temporary profile picture data
       if (tempProfilePictureUrl) {
         URL.revokeObjectURL(tempProfilePictureUrl);
       }
-      setTempProfilePicture(null);
+      setTempProfileImages([]);
       setTempProfilePictureUrl(undefined);
 
       // Refetch user data to get the updated profile
@@ -403,109 +469,48 @@ const SettingsPage: React.FC = () => {
           <div className="lg:col-span-3">
             {/* Profile Tab */}
             {activeTab === "profile" && (
-              <Card className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Profile Information
-                  </h2>
-                  {saveStatus === "saved" && (
-                    <div className="flex items-center text-green-600">
-                      <Check className="w-5 h-5 mr-2" />
-                      <span>Saved successfully</span>
-                    </div>
-                  )}
-                </div>
-
-                <form
-                  onSubmit={profileForm.handleSubmit(handleProfileSubmit)}
-                  className="space-y-6"
-                >
-                  {/* Profile Image */}
-                  <div className="flex items-center space-x-6 mb-6">
-                    <ProfilePicture
-                      currentImage={user?.profile?.profile_picture}
-                      onImageChange={handleImageChange}
-                      size="lg"
-                      editable={true}
-                      tempImage={tempProfilePictureUrl}
-                    />
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">
-                        Profile Photo
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Upload a new profile picture
-                      </p>
-                    </div>
+              <FormProvider {...methods}>
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Profile Information
+                    </h2>
+                    {saveStatus === "saved" && (
+                      <div className="flex items-center text-green-600">
+                        <Check className="w-5 h-5 mr-2" />
+                        <span>Saved successfully</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Personal Information */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input
-                      label="First Name"
-                      {...profileForm.register("firstName", {
-                        required: "First name is required",
-                      })}
-                      error={profileForm.formState.errors.firstName?.message}
-                    />
-                    <Input
-                      label="Last Name"
-                      {...profileForm.register("lastName", {
-                        required: "Last name is required",
-                      })}
-                      error={profileForm.formState.errors.lastName?.message}
-                    />
-                  </div>
-
-                  <Input
-                    label="Email Address"
-                    type="email"
-                    icon={<Mail className="w-5 h-5 text-gray-400" />}
-                    {...profileForm.register("email", {
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address",
-                      },
-                    })}
-                    error={profileForm.formState.errors.email?.message}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Input
-                      label="Phone Number"
-                      {...profileForm.register("phone")}
-                    />
-                    <Input
-                      label="Date of Birth"
-                      type="date"
-                      {...profileForm.register("dateOfBirth")}
-                      max={new Date().toISOString().split("T")[0]} // Prevent future dates
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Bio
-                    </label>
-                    <textarea
-                      {...profileForm.register("bio")}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Tell us about yourself..."
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    loading={saveStatus === "saving"}
-                    className="w-full md:w-auto"
+                  <form
+                    onSubmit={methods.handleSubmit(handleProfileSubmit)}
+                    className="space-y-6"
                   >
-                    <Save className="w-4 h-4 mr-2" />
-                    Save Changes
-                  </Button>
-                </form>
-              </Card>
+                    {user.role === "HOTEL" ? (
+                      <HotelProfileSettings
+                        user={user}
+                        onImageChange={handleImageChange}
+                      />
+                    ) : (
+                      <UserProfileSettings
+                        user={user}
+                        onImageChange={(file) => setTempProfileImages([file])}
+                        tempProfilePictureUrl={tempProfilePictureUrl}
+                      />
+                    )}
+
+                    <Button
+                      type="submit"
+                      loading={saveStatus === "saving"}
+                      className="w-full md:w-auto"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </Button>
+                  </form>
+                </Card>
+              </FormProvider>
             )}
 
             {/* Security Tab */}

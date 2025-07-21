@@ -61,17 +61,16 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
 }
 
-# Amadeus API Configuration
-AMADEUS_CLIENT_ID = config('AMADEUS_CLIENT_ID')
-AMADEUS_CLIENT_SECRET = config('AMADEUS_CLIENT_SECRET')
-AMADEUS_TEST_ENV = True  # Set to False for production
+# Travelpayouts API Configuration
+TRAVELPAYOUTS_API_KEY = config('TRAVELPAYOUTS_API_KEY')
+TRAVELPAYOUTS_AID = config('TRAVELPAYOUTS_AID')
 
 # JWT Settings
 SIMPLE_JWT = {

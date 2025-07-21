@@ -4,7 +4,7 @@ import { Building2, Calendar, Users, Search, Loader2 } from "lucide-react";
 
 interface HotelSearchProps {
   onSearch: (params: {
-    cityCode: string;
+    city: string;
     checkIn: string;
     checkOut: string;
     adults: number;
@@ -13,7 +13,7 @@ interface HotelSearchProps {
     nights: number;
   }) => void;
   initialValues?: {
-    cityCode: string;
+    city: string;
     checkIn: string;
     checkOut: string;
     adults: number;
@@ -26,7 +26,7 @@ export default function HotelSearch({
   initialValues,
   loading = false,
 }: HotelSearchProps) {
-  const [cityCode, setCityCode] = useState(initialValues?.cityCode || "");
+  const [city, setCity] = useState(initialValues?.city || "");
   const [checkIn, setCheckIn] = useState(
     initialValues?.checkIn || format(addDays(new Date(), 1), "yyyy-MM-dd")
   );
@@ -40,7 +40,7 @@ export default function HotelSearch({
 
   useEffect(() => {
     if (initialValues) {
-      setCityCode(initialValues.cityCode);
+      setCity(initialValues.city);
       setCheckIn(initialValues.checkIn);
       setCheckOut(initialValues.checkOut);
       setAdults(initialValues.adults);
@@ -51,13 +51,13 @@ export default function HotelSearch({
     e.preventDefault();
     setError("");
 
-    if (!cityCode) {
-      setError("Please enter a city code");
+    if (!city) {
+      setError("Please enter a city");
       return;
     }
 
     onSearch({
-      cityCode: cityCode.toUpperCase(),
+      city: city.toUpperCase(),
       checkIn,
       checkOut,
       adults,
@@ -89,15 +89,15 @@ export default function HotelSearch({
         >
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              City Code
+              City
             </label>
             <div className="relative">
               <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                value={cityCode}
-                onChange={(e) => setCityCode(e.target.value.toUpperCase())}
-                placeholder="Enter city code (e.g., LON, NYC)"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="e.g., London"
                 className="pl-10 w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 required
               />

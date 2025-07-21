@@ -7,7 +7,7 @@ from accounts.serializers import RegisterSerializer, UserSerializer, LoginSerial
 from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, permission_classes
 from datetime import timedelta
-from accounts.models import UserProfile
+from accounts.models import UserProfile, HotelProfile
 
 
 class RegisterView(APIView):
@@ -91,19 +91,22 @@ def user_profile(request):
     
     elif request.method == 'PUT':
         is_settings_update = request.headers.get('X-Settings-Update', 'false') == 'true'
+        
+        # Handle regular profile picture
         profile_picture = request.FILES.get('profile_picture')
-
-        if profile_picture and not is_settings_update:
-            return Response(
-                {"error": "Profile picture can only be updated from settings"},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         if profile_picture and is_settings_update:
             if not hasattr(request.user, 'profile'):
                 UserProfile.objects.create(user=request.user)
             request.user.profile.profile_picture = profile_picture
             request.user.profile.save()
+
+        # Handle hotel image
+        hotel_image = request.FILES.get('hotel_profile.hotel_image')
+        if hotel_image and is_settings_update and request.user.role == 'HOTEL':
+            if not hasattr(request.user, 'hotel_profile'):
+                HotelProfile.objects.create(user=request.user)
+            request.user.hotel_profile.hotel_image = hotel_image
+            request.user.hotel_profile.save()
 
         serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
