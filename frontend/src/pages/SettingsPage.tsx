@@ -103,15 +103,14 @@ const SettingsPage: React.FC = () => {
     if (user) {
       if (user.role === "HOTEL") {
         methods.reset({
-          hotelName: user.hotel_profile?.hotel_name || "",
-          address: user.hotel_profile?.address || "",
-          website: user.hotel_profile?.website || "",
-          pricePerNight: user.hotel_profile?.price_per_night || 0,
-          availabilityStartDate:
-            user.hotel_profile?.availability_start_date || "",
-          availabilityEndDate: user.hotel_profile?.availability_end_date || "",
-          features: user.hotel_profile?.features || "",
-          description: user.hotel_profile?.description || "",
+          hotelName: user.hotel?.name || "",
+          address: user.hotel?.address || "",
+          website: user.hotel?.website || "",
+          pricePerNight: user.hotel?.price_per_night || 0,
+          availabilityStartDate: user.hotel?.availability_start_date || "",
+          availabilityEndDate: user.hotel?.availability_end_date || "",
+          features: user.hotel?.features || "",
+          description: user.hotel?.description || "",
         });
       } else {
         methods.reset({
@@ -206,23 +205,23 @@ const SettingsPage: React.FC = () => {
       const formData = new FormData();
 
       if (user.role === "HOTEL") {
-        formData.append("hotel_profile.hotel_name", data.hotelName || "");
-        formData.append("hotel_profile.address", data.address || "");
-        formData.append("hotel_profile.website", data.website || "");
+        formData.append("hotel.name", data.hotelName || "");
+        formData.append("hotel.address", data.address || "");
+        formData.append("hotel.website", data.website || "");
         formData.append(
-          "hotel_profile.price_per_night",
+          "hotel.price_per_night",
           data.pricePerNight?.toString() || ""
         );
         formData.append(
-          "hotel_profile.availability_start_date",
+          "hotel.availability_start_date",
           data.availabilityStartDate || ""
         );
         formData.append(
-          "hotel_profile.availability_end_date",
+          "hotel.availability_end_date",
           data.availabilityEndDate || ""
         );
-        formData.append("hotel_profile.features", data.features || "");
-        formData.append("hotel_profile.description", data.description || "");
+        formData.append("hotel.features", data.features || "");
+        formData.append("hotel.description", data.description || "");
       } else {
         formData.append("first_name", data.firstName || "");
         formData.append("last_name", data.lastName || "");
@@ -260,16 +259,15 @@ const SettingsPage: React.FC = () => {
       const updatedData = await response.json();
       if (user.role === "HOTEL") {
         methods.reset({
-          hotelName: updatedData.hotel_profile?.hotel_name || "",
-          address: updatedData.hotel_profile?.address || "",
-          website: updatedData.hotel_profile?.website || "",
-          pricePerNight: updatedData.hotel_profile?.price_per_night || 0,
+          hotelName: updatedData.hotel?.name || "",
+          address: updatedData.hotel?.address || "",
+          website: updatedData.hotel?.website || "",
+          pricePerNight: updatedData.hotel?.price_per_night || 0,
           availabilityStartDate:
-            updatedData.hotel_profile?.availability_start_date || "",
-          availabilityEndDate:
-            updatedData.hotel_profile?.availability_end_date || "",
-          features: updatedData.hotel_profile?.features || "",
-          description: updatedData.hotel_profile?.description || "",
+            updatedData.hotel?.availability_start_date || "",
+          availabilityEndDate: updatedData.hotel?.availability_end_date || "",
+          features: updatedData.hotel?.features || "",
+          description: updatedData.hotel?.description || "",
         });
       } else {
         methods.reset({

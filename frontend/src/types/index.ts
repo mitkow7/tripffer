@@ -19,20 +19,37 @@ export interface Favorite {
   trip: Trip;
 }
 
+export interface UserProfile {
+  phone_number: string;
+  date_of_birth: string;
+  bio: string;
+  profile_picture: string;
+}
+
 export interface User {
   id: string;
   first_name: string;
   last_name: string;
   email: string;
-  profile?: {
-    profile_picture?: string;
-  };
-  hotel_profile?: {
-    hotel_name: string;
+  is_active: boolean;
+  role: "USER" | "HOTEL";
+  profile?: UserProfile;
+  hotel?: {
+    name: string;
+    stars: number;
     address: string;
     website: string;
     description: string;
-    hotel_stars: number;
-    hotel_image: string;
+    features: string;
+    images: { id: number; image: string }[];
+    rooms: Room[];
   };
+}
+
+export interface Room {
+  id: number;
+  price: number;
+  description: string;
+  bed_count: number;
+  room_type: string;
 }

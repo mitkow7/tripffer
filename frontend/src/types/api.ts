@@ -58,12 +58,16 @@ export interface User {
 export interface Booking {
   id: string;
   tripId: string;
-  trip: Trip;
+  trip?: Trip;
+  room?: Room;
   status: "pending" | "confirmed" | "cancelled" | "completed";
   bookingDate: string;
   totalPrice: number;
   travelers: number;
   specialRequests?: string;
+  type?: "trip" | "hotel";
+  start_date?: string;
+  end_date?: string;
 }
 
 export interface ApiResponse<T> {
@@ -82,6 +86,7 @@ export interface Hotel {
   name: string;
   stars: number;
   price: number;
+  price_per_night: string;
   location: {
     lon: number;
     lat: number;
@@ -89,9 +94,42 @@ export interface Hotel {
   };
   photo_url: string | null;
   address: string;
-  guestScore: number;
+  guest_score: number;
   distance_to_center: number;
   amenities: string[];
+  description?: string;
+  number_of_adults?: number;
+  rooms?: Room[];
+  check_in_time?: string;
+  check_out_time?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  reviews?: Review[];
+  images?: RoomImage[];
+}
+
+export interface FavoriteHotel {
+  id: string;
+  user: string;
+  hotel: Hotel;
+  created_at: string;
+}
+
+export interface RoomImage {
+  id: number;
+  image: string;
+}
+
+export interface Room {
+  id: number;
+  price: string;
+  description: string | null;
+  bed_count: number;
+  max_adults: number;
+  room_type: string;
+  images: RoomImage[];
+  hotel_name?: string;
+  hotel_address?: string;
 }
 
 export interface Offer {
@@ -108,4 +146,12 @@ export interface Offer {
       amount: string;
     }>;
   };
+}
+
+export interface Review {
+  id: string;
+  user: string;
+  rating: number;
+  comment: string;
+  created_at: string;
 }

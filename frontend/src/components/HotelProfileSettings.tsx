@@ -3,7 +3,6 @@ import { useFormContext } from "react-hook-form";
 import Input from "./ui/Input";
 
 interface HotelProfileSettingsProps {
-  user: any;
   onImageChange: (files: FileList) => void;
 }
 

@@ -13,27 +13,47 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { useCurrentUser, useUserBookings, useFavorites } from "../hooks/useApi";
-import { Booking, Favorite } from "../types";
+import { Booking, FavoriteHotel } from "../types/api";
 
 const DashboardPage: React.FC = () => {
-  const { user, isLoading: userLoading } = useCurrentUser();
+  const { data: userData, isLoading: userLoading } = useCurrentUser();
   const { data: bookingsData, isLoading: bookingsLoading } = useUserBookings();
   const { data: favoritesData, isLoading: favoritesLoading } = useFavorites();
-
+  const user = userData?.data;
   const bookings: Booking[] = bookingsData?.data || [];
-  const favorites: Favorite[] = favoritesData?.data || [];
+  const favorites: FavoriteHotel[] = favoritesData || [];
 
-  const upcomingBookings = bookings.filter(
-    (booking) =>
-      new Date(booking.trip.departureDate) > new Date() &&
-      booking.status === "confirmed"
-  );
+  const upcomingBookings = bookings.filter((booking) => {
+    if (booking.type === "trip" && booking.trip) {
+      return (
+        new Date(booking.trip.departureDate) > new Date() &&
+        (booking.status === "confirmed" || booking.status === "pending")
+      );
+    }
+    if (booking.type === "hotel" && booking.room && booking.start_date) {
+      return (
+        new Date(booking.start_date) > new Date() &&
+        (booking.status === "confirmed" || booking.status === "pending")
+      );
+    }
+    return false;
+  });
 
-  const pastBookings = bookings.filter(
-    (booking) =>
-      new Date(booking.trip.returnDate) < new Date() &&
-      booking.status === "completed"
-  );
+  const pastBookings = bookings.filter((booking) => {
+    if (booking.type === "trip" && booking.trip) {
+      return (
+        new Date(booking.trip.returnDate) < new Date() &&
+        booking.status === "confirmed"
+      );
+    }
+    if (booking.type === "hotel" && booking.room && booking.end_date) {
+      return (
+        new Date(booking.end_date) < new Date() &&
+        booking.status === "confirmed"
+      );
+    }
+    return false;
+  });
 
   const StatCard = ({
     icon,
@@ -74,9 +94,9 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="flex items-center">
             <Link to="/settings" className="mr-4">
-              {user?.profile?.profile_picture ? (
+              {user?.profile_picture ? (
                 <img
-                  src={user.profile.profile_picture}
+                  src={user.profile_picture}
                   alt="Profile"
                   className="w-12 h-12 rounded-full object-cover shadow-sm"
                 />
@@ -138,6 +158,7 @@ const DashboardPage: React.FC = () => {
                 <LoadingSpinner size="sm" />
               ) : (
                 `$${bookings
+                  .filter((booking) => booking.status !== "cancelled")
                   .reduce((sum, booking) => sum + booking.totalPrice, 0)
                   .toLocaleString()}`
               )
@@ -166,31 +187,63 @@ const DashboardPage: React.FC = () => {
               </div>
             ) : upcomingBookings.length > 0 ? (
               <div className="space-y-4">
-                {upcomingBookings.slice(0, 3).map((booking: Booking) => (
+                {upcomingBookings.slice(0, 3).map((booking: any) => (
                   <Card
                     key={booking.id}
                     hover
                     className="p-4 transition-shadow"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800">
-                        {booking.trip.title}
-                      </h3>
-                      <span className="text-sm text-blue-600 font-bold">
-                        ${booking.totalPrice}
-                      </span>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500 mb-2">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {booking.trip.destination}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {new Date(
-                        booking.trip.departureDate
-                      ).toLocaleDateString()}{" "}
-                      - {new Date(booking.trip.returnDate).toLocaleDateString()}
-                    </div>
+                    {booking.type === "trip" && booking.trip ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            {booking.trip.title}
+                          </h3>
+                          <span className="text-sm text-blue-600 font-bold">
+                            ${booking.totalPrice}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500 mb-2">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          {booking.trip.destination}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="w-4 h-4 mr-2" />
+                          {new Date(
+                            booking.trip.departureDate
+                          ).toLocaleDateString()}{" "}
+                          -{" "}
+                          {new Date(
+                            booking.trip.returnDate
+                          ).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ) : booking.type === "hotel" && booking.room ? (
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            {booking.room.hotel_name}
+                          </h3>
+                          <span className="text-sm text-blue-600 font-bold">
+                            ${booking.totalPrice}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500 mb-2">
+                          <MapPin className="w-4 h-4 mr-2" />
+                          {booking.room.hotel_address}
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="w-4 h-4 mr-2" />
+                          {booking.start_date &&
+                            new Date(
+                              booking.start_date
+                            ).toLocaleDateString()}{" "}
+                          -{" "}
+                          {booking.end_date &&
+                            new Date(booking.end_date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ) : null}
                   </Card>
                 ))}
               </div>
@@ -223,21 +276,21 @@ const DashboardPage: React.FC = () => {
               </div>
             ) : favorites.length > 0 ? (
               <div className="space-y-4">
-                {favorites.slice(0, 3).map((trip: Favorite) => (
-                  <Card key={trip.id} hover className="p-4 transition-shadow">
+                {favorites.slice(0, 3).map((fav: FavoriteHotel) => (
+                  <Card key={fav.id} hover className="p-4 transition-shadow">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-gray-800">
-                        {trip.trip.title}
+                        {fav.hotel.name}
                       </h3>
                       <span className="text-sm text-blue-600 font-bold">
-                        ${trip.trip.price}
+                        ${fav.hotel.price_per_night}
                       </span>
                     </div>
                     <div className="flex items-center text-sm text-gray-500 mb-2">
                       <MapPin className="w-4 h-4 mr-2" />
-                      {trip.trip.destination}
+                      {fav.hotel.address}
                     </div>
-                    <Link to={`/trips/${trip.trip.id}`}>
+                    <Link to={`/hotel/search/${fav.hotel.id}`}>
                       <Button size="sm" variant="outline" className="w-full">
                         View Details
                       </Button>

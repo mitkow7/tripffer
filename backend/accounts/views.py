@@ -7,7 +7,8 @@ from accounts.serializers import RegisterSerializer, UserSerializer, LoginSerial
 from django.contrib.auth import authenticate
 from rest_framework.decorators import api_view, permission_classes
 from datetime import timedelta
-from accounts.models import UserProfile, HotelProfile
+from accounts.models import UserProfile
+from hotels.models import Hotel, HotelImage
 
 
 class RegisterView(APIView):
@@ -101,12 +102,10 @@ def user_profile(request):
             request.user.profile.save()
 
         # Handle hotel image
-        hotel_image = request.FILES.get('hotel_profile.hotel_image')
-        if hotel_image and is_settings_update and request.user.role == 'HOTEL':
-            if not hasattr(request.user, 'hotel_profile'):
-                HotelProfile.objects.create(user=request.user)
-            request.user.hotel_profile.hotel_image = hotel_image
-            request.user.hotel_profile.save()
+        hotel_image_data = request.FILES.get('hotel_image')
+        if hotel_image_data and is_settings_update and request.user.role == 'HOTEL':
+            hotel, created = Hotel.objects.get_or_create(user=request.user)
+            HotelImage.objects.create(hotel=hotel, image=hotel_image_data)
 
         serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():

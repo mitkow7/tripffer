@@ -48,8 +48,8 @@ const RegisterPage: React.FC = () => {
       };
 
       if (data.role === "HOTEL") {
-        registrationData.hotel_profile = {
-          hotel_name: data.hotelName,
+        registrationData.hotel = {
+          name: data.hotelName,
           address: data.address,
           website: data.website,
           description: data.description,

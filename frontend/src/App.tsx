@@ -14,6 +14,9 @@ import HelpCenterPage from "./pages/HelpCenterPage";
 import ContactPage from "./pages/ContactPage";
 import SettingsPage from "./pages/SettingsPage";
 import HotelDashboardPage from "./pages/HotelDashboardPage";
+import HotelDetailsPage from "./pages/HotelDetailsPage";
+import BookingPage from "./pages/BookingPage";
+import BookingsPage from "./pages/BookingsPage";
 
 function App() {
   return (
@@ -34,6 +37,15 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/hotel-dashboard" element={<HotelDashboardPage />} />
+              <Route
+                path="/hotel/search/:hotelId"
+                element={<HotelDetailsPage />}
+              />
+              <Route
+                path="/hotel/:hotelId/room/:roomId/book"
+                element={<BookingPage />}
+              />
+              <Route path="/bookings" element={<BookingsPage />} />
             </Routes>
           </main>
           <Footer />

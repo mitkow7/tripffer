@@ -1,13 +1,7 @@
-import {
-  MapPin,
-  Star,
-  DollarSign,
-  BedDouble,
-  Users,
-  Sparkles,
-  Navigation,
-} from "lucide-react";
+import { MapPin, Star, DollarSign, Heart, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Hotel } from "../../types/api";
+import { useFavorites, useToggleFavorite } from "../../hooks/useApi";
 
 interface SearchResultsProps {
   hotel: Hotel;
@@ -32,87 +26,92 @@ const renderStars = (rating: number) => {
 const HotelImage = ({
   hotelName,
   photoUrl,
+  hotelId,
 }: {
   hotelName: string;
   photoUrl: string | null;
-}) => (
-  <div className="relative h-48 w-full overflow-hidden">
-    {photoUrl ? (
-      <img
-        src={photoUrl}
-        alt={`Image of ${hotelName}`}
-        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-      />
-    ) : (
-      <div className="h-full w-full bg-gray-200 flex items-center justify-center">
-        <span className="text-gray-500">No Image Available</span>
-      </div>
-    )}
-  </div>
-);
+  hotelId: string;
+}) => {
+  const { data: favoritesData } = useFavorites();
+  const toggleFavorite = useToggleFavorite();
+  const favorites = favoritesData || [];
+  const isFavorited = favorites.some((fav: any) => fav.hotel.id === hotelId);
+  const favoriteId = favorites.find((fav: any) => fav.hotel.id === hotelId)?.id;
+
+  return (
+    <div className="relative h-56 w-full overflow-hidden">
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={`Image of ${hotelName}`}
+          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+        />
+      ) : (
+        <div className="h-full w-full bg-gray-200 flex items-center justify-center">
+          <span className="text-gray-500">No Image Available</span>
+        </div>
+      )}
+      <button
+        className="absolute top-3 right-3 bg-white p-2 rounded-full shadow-lg hover:bg-red-100 transition-colors"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFavorite(hotelId, isFavorited, favoriteId);
+        }}
+      >
+        <Heart
+          className={`h-5 w-5 ${
+            isFavorited ? "text-red-500 fill-current" : "text-gray-400"
+          }`}
+        />
+      </button>
+    </div>
+  );
+};
 
 const SearchResults = ({ hotel, nights }: SearchResultsProps) => {
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden transition-shadow duration-300 hover:shadow-xl group">
-      <HotelImage hotelName={hotel.name} photoUrl={hotel.photo_url} />
-      <div className="p-4 flex flex-col flex-grow">
-        <div className="flex justify-between items-start">
-          <div className="flex-grow">
-            <h3 className="text-xl font-bold text-gray-900">{hotel.name}</h3>
-            <div className="flex items-center mt-1">
-              <MapPin className="h-4 w-4 text-gray-500 mr-1" />
-              <p className="text-sm text-gray-600">
-                {hotel.address || "Address not available"}
-              </p>
-            </div>
-            {hotel.distance_to_center && (
-              <div className="flex items-center mt-1 text-sm text-gray-600">
-                <Navigation className="h-4 w-4 mr-1" />
-                <span>{hotel.distance_to_center.toFixed(1)} km to center</span>
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl group">
+      <Link to={`/hotel/search/${hotel.id}`} className="block">
+        <HotelImage
+          hotelName={hotel.name}
+          photoUrl={hotel.photo_url}
+          hotelId={hotel.id}
+        />
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-2xl font-bold text-gray-900 leading-tight">
+              {hotel.name}
+            </h3>
+            {renderStars(hotel.stars)}
+          </div>
+          <div className="flex items-center text-gray-600 mb-4">
+            <MapPin className="h-4 w-4 mr-2" />
+            <p className="text-sm">
+              {hotel.address || "Address not available"}
+            </p>
+          </div>
+
+          <div className="flex justify-between items-center mt-6">
+            <div>
+              <p className="text-sm text-gray-600">Price per night</p>
+              <div className="flex items-center text-2xl font-bold text-gray-900">
+                <DollarSign className="h-6 w-6 mr-1 text-green-500" />
+                <span>{parseFloat(hotel.price_per_night).toFixed(2)}</span>
               </div>
-            )}
-          </div>
-          <div className="flex-shrink-0 ml-4">
-            {hotel.stars && renderStars(hotel.stars)}
-          </div>
-        </div>
-
-        <div className="mt-2 flex items-center">
-          {hotel.guestScore && (
-            <div className="bg-blue-500 text-white rounded-full px-2 py-1 text-sm font-bold">
-              {hotel.guestScore.toFixed(1)}
             </div>
-          )}
-        </div>
-
-        {hotel.amenities && hotel.amenities.length > 0 && (
-          <div className="mt-4 pt-2 border-t">
-            <h4 className="font-semibold text-gray-800 mb-2">Amenities</h4>
-            <div className="flex flex-wrap gap-2">
-              {hotel.amenities.slice(0, 5).map((amenity, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-200 text-gray-700 px-2 py-1 rounded-full text-xs"
-                >
-                  {amenity.replace(/_/g, " ")}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mt-auto pt-4 border-t">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center text-lg font-bold text-gray-800">
-              <DollarSign className="h-5 w-5 mr-1 text-green-500" />
-              <span>{hotel.price.toFixed(2)}</span>
-            </div>
-            <div className="text-sm text-gray-600">
-              Total for {nights} night{nights > 1 ? "s" : ""}
+            <div className="text-right">
+              <p className="text-sm text-gray-600">
+                Total for {nights} night{nights > 1 ? "s" : ""}
+              </p>
+              <div className="inline-flex items-center font-semibold text-blue-600 hover:text-blue-800">
+                View Details
+                <ChevronRight className="ml-1 h-5 w-5" />
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Link>
     </div>
   );
 };

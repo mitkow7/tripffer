@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import axios from "axios";
+import { useLocation, useNavigate } from "react-router-dom";
+import api from "../config/api";
 import { Hotel } from "../types/api";
 import HotelSearch from "../components/features/HotelSearch";
 import HotelCardSkeleton from "../components/features/HotelCardSkeleton";
@@ -8,83 +8,118 @@ import SearchResults from "../components/features/SearchResults";
 
 const SearchPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const [searchParams, setSearchParams] = useState({
+    city: "",
+    checkIn: "",
+    checkOut: "",
+    adults: 1,
+    beds: 1,
+    currency: "USD",
+  });
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [nights, setNights] = useState(0);
-
-  const handleSearch = async (searchParams: {
-    city: string;
-    checkIn: string;
-    checkOut: string;
-    adults: number;
-    rooms: number;
-    currency: string;
-    nights: number;
-  }) => {
-    setIsLoading(true);
-    setError(null);
-    setHotels([]);
-    setHasSearched(true);
-    setNights(searchParams.nights);
-
-    try {
-      const response = await axios.get("/api/hotels/search/", {
-        params: {
-          city: searchParams.city,
-          check_in: searchParams.checkIn,
-          check_out: searchParams.checkOut,
-          adults: searchParams.adults,
-        },
-      });
-      setHotels(response.data);
-    } catch (err: any) {
-      setError(
-        err.response?.data?.error ||
-          "Failed to fetch hotel offers. Please try again."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const destination = params.get("destination");
-    const checkIn = params.get("checkIn");
-    const checkOut = params.get("checkOut");
-    const adults = params.get("adults");
+    const city = params.get("destination") || "";
+    const checkIn = params.get("checkIn") || "";
+    const checkOut = params.get("checkOut") || "";
+    const adults = parseInt(params.get("adults") || "1", 10);
+    const beds = parseInt(params.get("beds") || "1", 10);
+    const currency = params.get("currency") || "USD";
 
-    if (destination && checkIn && checkOut && adults) {
-      const checkInDate = new Date(checkIn);
-      const checkOutDate = new Date(checkOut);
-      const nights = Math.ceil(
-        (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24)
-      );
-      handleSearch({
-        city: destination,
-        checkIn,
-        checkOut,
-        adults: parseInt(adults, 10),
-        rooms: 1, // Default value, can be adjusted
-        currency: "EUR", // Default value
-        nights,
-      });
+    setSearchParams({ city, checkIn, checkOut, adults, beds, currency });
+
+    const fetchHotels = async () => {
+      setIsLoading(true);
+      setError(null);
+      setHotels([]);
+
+      const apiParams = {
+        city,
+        check_in: checkIn,
+        check_out: checkOut,
+        adults,
+        beds,
+      };
+
+      try {
+        const response = await api.get("hotels/search/", { params: apiParams });
+        setHotels(response.data);
+      } catch (err: any) {
+        setError(
+          err.response?.data?.error ||
+            "Failed to fetch hotels. Please try again."
+        );
+      } finally {
+        setIsLoading(false);
+        setHasSearched(true);
+      }
+    };
+
+    if (city) {
+      fetchHotels();
+    } else {
+      setHotels([]);
+      setHasSearched(false);
     }
   }, [location.search]);
 
-  return (
-    <div className="flex-grow bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-          <HotelSearch onSearch={handleSearch} loading={isLoading} />
-        </div>
+  const handleSearchParamChange = (
+    param: keyof typeof searchParams,
+    value: string | number
+  ) => {
+    setSearchParams((prev) => ({ ...prev, [param]: value }));
+  };
 
-        {hasSearched && (
-          <div className="mt-8">
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    params.set("destination", searchParams.city);
+    if (searchParams.checkIn) {
+      params.set("checkIn", searchParams.checkIn);
+    }
+    if (searchParams.checkOut) {
+      params.set("checkOut", searchParams.checkOut);
+    }
+    params.set("adults", searchParams.adults.toString());
+    params.set("beds", searchParams.beds.toString());
+    params.set("currency", searchParams.currency);
+    navigate({ search: params.toString() });
+  };
+
+  const nights =
+    searchParams.checkIn && searchParams.checkOut
+      ? Math.ceil(
+          (new Date(searchParams.checkOut).getTime() -
+            new Date(searchParams.checkIn).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0;
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          <aside className="lg:col-span-1">
+            <div className="sticky top-24">
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h2 className="text-xl font-bold mb-4">Search Again</h2>
+                <HotelSearch
+                  searchParams={searchParams}
+                  onSearchParamChange={handleSearchParamChange}
+                  onSearch={handleSearch}
+                  loading={isLoading}
+                />
+              </div>
+            </div>
+          </aside>
+          <main className="lg:col-span-3">
             {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {[...Array(6)].map((_, i) => (
                   <HotelCardSkeleton key={i} />
                 ))}
@@ -94,18 +129,25 @@ const SearchPage: React.FC = () => {
                 {error}
               </div>
             ) : hotels.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {hotels.map((hotel) => (
                   <SearchResults key={hotel.id} hotel={hotel} nights={nights} />
                 ))}
               </div>
             ) : (
-              <div className="text-center text-gray-500">
-                <p>No hotels found for the selected criteria.</p>
+              <div className="text-center text-gray-500 py-16">
+                <h3 className="text-2xl font-semibold">
+                  {hasSearched ? "No hotels found" : "No hotels available"}
+                </h3>
+                <p>
+                  {hasSearched
+                    ? "Try adjusting your search criteria."
+                    : "Please check back later."}
+                </p>
               </div>
             )}
-          </div>
-        )}
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -1,190 +1,144 @@
-import { FormEvent, useEffect, useState } from "react";
-import { format, addDays } from "date-fns";
-import { Building2, Calendar, Users, Search, Loader2 } from "lucide-react";
+import React from "react";
+import { MapPin, Calendar, Users, Bed, DollarSign, Search } from "lucide-react";
 
-interface HotelSearchProps {
-  onSearch: (params: {
-    city: string;
-    checkIn: string;
-    checkOut: string;
-    adults: number;
-    rooms: number;
-    currency: string;
-    nights: number;
-  }) => void;
-  initialValues?: {
-    city: string;
-    checkIn: string;
-    checkOut: string;
-    adults: number;
-  };
-  loading?: boolean;
+interface SearchParams {
+  city: string;
+  checkIn: string;
+  checkOut: string;
+  adults: number;
+  beds: number;
+  currency: string;
 }
 
-export default function HotelSearch({
+interface HotelSearchProps {
+  searchParams: SearchParams;
+  onSearchParamChange: (
+    param: keyof SearchParams,
+    value: string | number
+  ) => void;
+  onSearch: () => void;
+  loading: boolean;
+}
+
+const InputGroup: React.FC<{
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}> = ({ icon, children }) => (
+  <div className="flex items-center bg-gray-100 p-3 rounded-lg border border-gray-200">
+    {icon}
+    {children}
+  </div>
+);
+
+const HotelSearch: React.FC<HotelSearchProps> = ({
+  searchParams,
+  onSearchParamChange,
   onSearch,
-  initialValues,
-  loading = false,
-}: HotelSearchProps) {
-  const [city, setCity] = useState(initialValues?.city || "");
-  const [checkIn, setCheckIn] = useState(
-    initialValues?.checkIn || format(addDays(new Date(), 1), "yyyy-MM-dd")
-  );
-  const [checkOut, setCheckOut] = useState(
-    initialValues?.checkOut || format(addDays(new Date(), 8), "yyyy-MM-dd")
-  );
-  const [adults, setAdults] = useState(initialValues?.adults || 1);
-  const [rooms, setRooms] = useState(1);
-  const [currency, setCurrency] = useState("EUR");
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (initialValues) {
-      setCity(initialValues.city);
-      setCheckIn(initialValues.checkIn);
-      setCheckOut(initialValues.checkOut);
-      setAdults(initialValues.adults);
-    }
-  }, [initialValues]);
-
-  const handleSearch = (e: FormEvent) => {
+  loading,
+}) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-
-    if (!city) {
-      setError("Please enter a city");
-      return;
-    }
-
-    onSearch({
-      city: city.toUpperCase(),
-      checkIn,
-      checkOut,
-      adults,
-      rooms,
-      currency,
-      nights: calculateNights(),
-    });
-  };
-
-  const calculateNights = () => {
-    if (!checkIn || !checkOut) {
-      return 0;
-    }
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
-
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) {
-      return 0;
-    }
-    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+    onSearch();
   };
 
   return (
-    <div className="bg-white border-b">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <form
-          onSubmit={handleSearch}
-          className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end"
-        >
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              City
-            </label>
-            <div className="relative">
-              <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="e.g., London"
-                className="pl-10 w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-in
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="date"
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-                min={format(new Date(), "yyyy-MM-dd")}
-                className="pl-10 w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Check-out
-            </label>
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <input
-                type="date"
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                min={checkIn}
-                className="pl-10 w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Guests
-            </label>
-            <div className="relative">
-              <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <select
-                value={adults}
-                onChange={(e) => setAdults(parseInt(e.target.value))}
-                className="pl-10 w-full h-10 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                {[1, 2, 3, 4].map((num) => (
-                  <option key={num} value={num}>
-                    {num} {num === 1 ? "Guest" : "Guests"}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 transition-colors duration-200 flex items-center justify-center space-x-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="animate-spin h-5 w-5" />
-                  <span>Searching...</span>
-                </>
-              ) : (
-                <>
-                  <Search className="h-5 w-5" />
-                  <span>Search</span>
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600">{error}</p>
-          </div>
-        )}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Destination
+        </label>
+        <InputGroup icon={<MapPin className="text-gray-500 mr-3" />}>
+          <input
+            type="text"
+            value={searchParams.city}
+            onChange={(e) => onSearchParamChange("city", e.target.value)}
+            placeholder="e.g. New York"
+            className="bg-transparent focus:outline-none w-full"
+          />
+        </InputGroup>
       </div>
-    </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Dates
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <InputGroup icon={<Calendar className="text-gray-500 mr-3" />}>
+            <input
+              type="date"
+              value={searchParams.checkIn}
+              onChange={(e) => onSearchParamChange("checkIn", e.target.value)}
+              className="bg-transparent focus:outline-none w-full"
+            />
+          </InputGroup>
+          <InputGroup icon={<Calendar className="text-gray-500 mr-3" />}>
+            <input
+              type="date"
+              value={searchParams.checkOut}
+              onChange={(e) => onSearchParamChange("checkOut", e.target.value)}
+              className="bg-transparent focus:outline-none w-full"
+            />
+          </InputGroup>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Guests & Beds
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <InputGroup icon={<Users className="text-gray-500 mr-3" />}>
+            <input
+              type="number"
+              value={searchParams.adults}
+              min={1}
+              onChange={(e) =>
+                onSearchParamChange("adults", parseInt(e.target.value))
+              }
+              className="bg-transparent focus:outline-none w-full"
+            />
+          </InputGroup>
+          <InputGroup icon={<Bed className="text-gray-500 mr-3" />}>
+            <input
+              type="number"
+              value={searchParams.beds}
+              min={1}
+              onChange={(e) =>
+                onSearchParamChange("beds", parseInt(e.target.value))
+              }
+              className="bg-transparent focus:outline-none w-full"
+            />
+          </InputGroup>
+        </div>
+      </div>
+
+      <div>
+        <label className="text-sm font-medium text-gray-700 mb-1 block">
+          Currency
+        </label>
+        <InputGroup icon={<DollarSign className="text-gray-500 mr-3" />}>
+          <select
+            value={searchParams.currency}
+            onChange={(e) => onSearchParamChange("currency", e.target.value)}
+            className="bg-transparent focus:outline-none w-full"
+          >
+            <option>USD</option>
+            <option>EUR</option>
+            <option>GBP</option>
+          </select>
+        </InputGroup>
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors flex items-center justify-center"
+      >
+        {loading ? "Searching..." : "Search"}
+        {!loading && <Search className="ml-2" />}
+      </button>
+    </form>
   );
-}
+};
+
+export default HotelSearch;

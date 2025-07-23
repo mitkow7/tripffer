@@ -29,10 +29,7 @@ export default function HomepageSearchForm() {
       <h2 className="text-2xl font-bold mb-4 text-gray-800">
         Search for Hotels
       </h2>
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
-      >
+      <form className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div className="md:col-span-2">
           <label
             htmlFor="city"
@@ -111,7 +108,8 @@ export default function HomepageSearchForm() {
         </div>
         <div className="md:col-span-4">
           <button
-            type="submit"
+            type="button"
+            onClick={handleSubmit}
             className="w-full flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 h-12"
           >
             <Search className="h-5 w-5 mr-2" />

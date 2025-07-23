@@ -140,16 +140,6 @@ const Header: React.FC = () => {
                       <User className="w-4 h-4" />
                       <span>Dashboard</span>
                     </Link>
-                    {user?.role !== "HOTEL" && (
-                      <Link
-                        to="/favorites"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Heart className="w-4 h-4" />
-                        <span>Favorites</span>
-                      </Link>
-                    )}
                     <Link
                       to="/settings"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"

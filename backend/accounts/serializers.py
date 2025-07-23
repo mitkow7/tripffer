@@ -1,21 +1,11 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from .models import UserProfile, HotelProfile, UserType, HotelImage
+from accounts.models import UserProfile, UserType
+from hotels.models import Hotel, HotelImage
+from hotels.serializers import HotelSerializer
 
 User = get_user_model()
-
-class HotelImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HotelImage
-        fields = ('id', 'image')
-
-class HotelProfileSerializer(serializers.ModelSerializer):
-    images = HotelImageSerializer(many=True, read_only=True)
-        
-    class Meta:
-        model = HotelProfile
-        fields = ('hotel_name', 'hotel_stars', 'address', 'website', 'description', 'price_per_night', 'availability_start_date', 'availability_end_date', 'features', 'images')
 
 class UserProfileSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
@@ -34,11 +24,11 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(required=False)
-    hotel_profile = HotelProfileSerializer(required=False)
+    hotel = HotelSerializer(required=False)
     
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'is_active', 'role', 'profile', 'hotel_profile')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'is_active', 'role', 'profile', 'hotel')
         read_only_fields = ('id', 'date_joined', 'role')
         extra_kwargs = {
             'first_name': {'required': False},
@@ -48,7 +38,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         profile_data = validated_data.pop('profile', None)
-        hotel_profile_data = validated_data.pop('hotel_profile', None)
+        hotel_data = validated_data.pop('hotel', None)
         
         # Update user fields
         for attr, value in validated_data.items():
@@ -62,22 +52,22 @@ class UserSerializer(serializers.ModelSerializer):
                 setattr(profile, attr, value)
             profile.save()
 
-        if hotel_profile_data and instance.role == UserType.HOTEL:
+        if hotel_data and instance.role == UserType.HOTEL:
             images_data = self.context['request'].FILES.getlist('images')
-            hotel_profile, created = HotelProfile.objects.get_or_create(user=instance)
-            for attr, value in hotel_profile_data.items():
-                setattr(hotel_profile, attr, value)
-            hotel_profile.save()
+            hotel, created = Hotel.objects.get_or_create(user=instance)
+            for attr, value in hotel_data.items():
+                setattr(hotel, attr, value)
+            hotel.save()
 
             if images_data:
                 for image_data in images_data:
-                    HotelImage.objects.create(hotel_profile=hotel_profile, image=image_data)
+                    HotelImage.objects.create(hotel=hotel, image=image_data)
 
         return instance
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    hotel_profile = HotelProfileSerializer(required=False)
+    hotel = HotelSerializer(required=False)
     password = serializers.CharField(
         write_only=True, 
         validators=[validate_password],
@@ -90,7 +80,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name', 'password', 'password_confirm', 'role', 'hotel_profile')
+        fields = ('username', 'email', 'first_name', 'last_name', 'password', 'password_confirm', 'role', 'hotel')
         extra_kwargs = {
             'email': {'required': True},
             'first_name': {'required': True},
@@ -120,12 +110,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         """
         validated_data.pop('password_confirm')
         role = validated_data.pop('role', 'USER')
-        hotel_profile_data = validated_data.pop('hotel_profile', None)
+        hotel_data = validated_data.pop('hotel', None)
 
         user = User.objects.create_user(**validated_data, role=role)
         
-        if role == UserType.HOTEL and hotel_profile_data:
-            HotelProfile.objects.create(user=user, **hotel_profile_data)
+        if role == UserType.HOTEL and hotel_data:
+            Hotel.objects.create(user=user, **hotel_data)
         else:
             UserProfile.objects.get_or_create(user=user)
             

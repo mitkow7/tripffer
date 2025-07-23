@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useCurrentUser } from "../hooks/useApi";
+import { useMyHotel } from "../hooks/useApi";
 import {
   MapPin,
   Globe,
@@ -13,7 +13,16 @@ import {
   ParkingCircle,
   Utensils,
   Wind,
+  Plus,
+  Edit,
+  Users,
 } from "lucide-react";
+import AddRoomForm from "../features/rooms/AddRoomForm";
+import EditRoomForm from "../features/rooms/EditRoomForm";
+import Button from "../components/ui/Button";
+import Modal from "../components/ui/Modal";
+import Carousel from "../components/ui/Carousel";
+import { Room } from "../types/api";
 
 const featureIcons: { [key: string]: React.ReactElement } = {
   "free wifi": <Wifi className="w-5 h-5 mr-2" />,
@@ -38,14 +47,16 @@ const InfoCard: React.FC<{
 );
 
 const HotelDashboardPage: React.FC = () => {
-  const { user, isLoading, error } = useCurrentUser();
+  const { data: hotel, isLoading, error, refetch } = useMyHotel();
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [showAddRoomForm, setShowAddRoomForm] = useState(false);
+  const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    if (user?.hotel_profile?.images?.length > 0) {
-      setSelectedImage(user.hotel_profile.images[0].image);
+    if (hotel?.images?.length > 0 && !selectedImage) {
+      setSelectedImage(hotel.images[0].image);
     }
-  }, [user]);
+  }, [hotel, selectedImage]);
 
   if (isLoading) {
     return (
@@ -66,12 +77,10 @@ const HotelDashboardPage: React.FC = () => {
     );
   }
 
-  const hotelProfile = user?.hotel_profile;
-
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        {hotelProfile ? (
+        {hotel ? (
           <>
             <header className="mb-8 bg-white rounded-lg shadow-md p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center">
@@ -79,7 +88,7 @@ const HotelDashboardPage: React.FC = () => {
                   {selectedImage ? (
                     <img
                       src={selectedImage}
-                      alt={hotelProfile.hotel_name}
+                      alt={hotel.name}
                       className="w-full h-48 rounded-lg object-cover"
                     />
                   ) : (
@@ -88,11 +97,11 @@ const HotelDashboardPage: React.FC = () => {
                     </div>
                   )}
                   <div className="flex mt-2 space-x-2">
-                    {hotelProfile.images?.map((image: any) => (
+                    {hotel.images?.map((image: any) => (
                       <img
                         key={image.id}
                         src={image.image}
-                        alt={hotelProfile.hotel_name}
+                        alt={hotel.name}
                         className={`w-16 h-16 rounded-lg object-cover cursor-pointer ${
                           selectedImage === image.image
                             ? "border-2 border-blue-500"
@@ -105,7 +114,7 @@ const HotelDashboardPage: React.FC = () => {
                 </div>
                 <div className="flex-grow md:pl-6">
                   <h1 className="text-4xl font-bold text-gray-800">
-                    {hotelProfile.hotel_name}
+                    {hotel.name}
                   </h1>
                   <p className="text-gray-600 mt-1">
                     Manage your hotel profile and bookings.
@@ -116,9 +125,7 @@ const HotelDashboardPage: React.FC = () => {
                     <Star
                       key={i}
                       className={`w-6 h-6 ${
-                        i < hotelProfile.hotel_stars
-                          ? "text-yellow-400"
-                          : "text-gray-300"
+                        i < hotel.stars ? "text-yellow-400" : "text-gray-300"
                       }`}
                       fill="currentColor"
                     />
@@ -130,12 +137,12 @@ const HotelDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <InfoCard title="Description" icon={<FileText />}>
-                  <p className="text-gray-600">{hotelProfile.description}</p>
+                  <p className="text-gray-600">{hotel.description}</p>
                 </InfoCard>
 
                 <InfoCard title="Features" icon={<CheckSquare />}>
                   <div className="flex flex-wrap gap-4">
-                    {hotelProfile.features
+                    {hotel.features
                       ?.split(",")
                       .map((feature: string, index: number) => (
                         <div
@@ -150,6 +157,91 @@ const HotelDashboardPage: React.FC = () => {
                       ))}
                   </div>
                 </InfoCard>
+                <InfoCard title="Rooms" icon={<Building />}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    {hotel.rooms?.map((room: Room) => (
+                      <div
+                        key={room.id}
+                        className="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 ease-in-out"
+                      >
+                        <div className="relative">
+                          <Carousel
+                            images={room.images}
+                            altText={`Image of ${room.room_type}`}
+                          />
+                          <div className="absolute top-0 right-0 bg-blue-500 text-white py-1 px-3 rounded-bl-lg font-bold">
+                            ${room.price}
+                          </div>
+                          <div className="absolute bottom-0 right-0 p-2">
+                            <Button
+                              size="sm"
+                              onClick={() => setEditingRoom(room)}
+                            >
+                              <Edit className="w-4 h-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          <h4 className="text-2xl font-semibold text-gray-800 mb-2">
+                            {room.room_type}
+                          </h4>
+                          <p className="text-gray-600 mb-4">
+                            {room.description}
+                          </p>
+                          <div className="flex justify-between">
+                            <div className="flex items-center text-gray-700">
+                              <svg
+                                className="w-5 h-5 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+                                ></path>
+                              </svg>
+                              <span>
+                                {room.bed_count} Bed
+                                {room.bed_count > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                            <div className="flex items-center text-gray-700">
+                              <Users className="w-5 h-5 mr-2" />
+                              <span>
+                                {room.max_adults} Adult
+                                {room.max_adults > 1 ? "s" : ""}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <Button
+                    onClick={() => setShowAddRoomForm(!showAddRoomForm)}
+                    className="mt-4"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    {showAddRoomForm ? "Cancel" : "Add Room"}
+                  </Button>
+                  {showAddRoomForm && (
+                    <div className="mt-4">
+                      <AddRoomForm
+                        onSuccess={() => {
+                          setShowAddRoomForm(false);
+                          if (refetch) {
+                            refetch();
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </InfoCard>
               </div>
 
               <div className="space-y-8">
@@ -157,18 +249,18 @@ const HotelDashboardPage: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-center text-gray-700">
                       <MapPin className="w-5 h-5 mr-3" />
-                      <span>{hotelProfile.address}</span>
+                      <span>{hotel.address}</span>
                     </div>
-                    {hotelProfile.website && (
+                    {hotel.website && (
                       <div className="flex items-center text-gray-700">
                         <Globe className="w-5 h-5 mr-3" />
                         <a
-                          href={hotelProfile.website}
+                          href={hotel.website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline"
                         >
-                          {hotelProfile.website}
+                          {hotel.website}
                         </a>
                       </div>
                     )}
@@ -177,19 +269,19 @@ const HotelDashboardPage: React.FC = () => {
 
                 <InfoCard title="Pricing & Availability" icon={<DollarSign />}>
                   <div className="space-y-4">
-                    {hotelProfile.price_per_night && (
+                    {hotel.price_per_night && (
                       <div className="flex items-center text-gray-700">
                         <DollarSign className="w-5 h-5 mr-3 text-green-500" />
                         <div>
                           <p className="font-semibold text-gray-900">
-                            ${hotelProfile.price_per_night}
+                            ${hotel.price_per_night}
                           </p>
                           <p className="text-sm text-gray-600">per night</p>
                         </div>
                       </div>
                     )}
-                    {hotelProfile.availability_start_date &&
-                      hotelProfile.availability_end_date && (
+                    {hotel.availability_start_date &&
+                      hotel.availability_end_date && (
                         <div className="flex items-center text-gray-700">
                           <Calendar className="w-5 h-5 mr-3 text-blue-500" />
                           <div>
@@ -198,11 +290,11 @@ const HotelDashboardPage: React.FC = () => {
                             </p>
                             <p className="text-sm text-gray-600">
                               {new Date(
-                                hotelProfile.availability_start_date
+                                hotel.availability_start_date
                               ).toLocaleDateString()}{" "}
                               -{" "}
                               {new Date(
-                                hotelProfile.availability_end_date
+                                hotel.availability_end_date
                               ).toLocaleDateString()}
                             </p>
                           </div>
@@ -220,6 +312,18 @@ const HotelDashboardPage: React.FC = () => {
               Please complete your hotel registration to manage your dashboard.
             </p>
           </div>
+        )}
+        {editingRoom && (
+          <Modal isOpen={!!editingRoom} onClose={() => setEditingRoom(null)}>
+            <h2 className="text-2xl font-bold mb-4">{`Edit Room - ${editingRoom.room_type}`}</h2>
+            <EditRoomForm
+              room={editingRoom}
+              onSuccess={() => {
+                setEditingRoom(null);
+                refetch();
+              }}
+            />
+          </Modal>
         )}
       </div>
     </div>

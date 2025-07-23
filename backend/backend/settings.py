@@ -68,10 +68,6 @@ REST_FRAMEWORK = {
     ],
 }
 
-# Travelpayouts API Configuration
-TRAVELPAYOUTS_API_KEY = config('TRAVELPAYOUTS_API_KEY')
-TRAVELPAYOUTS_AID = config('TRAVELPAYOUTS_AID')
-
 # JWT Settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
