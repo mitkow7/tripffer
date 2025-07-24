@@ -26,6 +26,11 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = HotelSerializer
     permission_classes = [permissions.AllowAny]
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def get_queryset(self):
         # Get all query parameters
         city = self.request.query_params.get('city')

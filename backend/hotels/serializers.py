@@ -1,6 +1,13 @@
 from datetime import date
 from rest_framework import serializers
-from .models import Hotel, HotelImage, Room, Booking, RoomImage, FavoriteHotel, Review
+from .models import Hotel, HotelImage, Room, Booking, RoomImage, FavoriteHotel, Review, Feature
+
+
+class FeatureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feature
+        fields = ['id', 'name', 'is_amenity']
+
 
 class AmenitiesField(serializers.Field):
     def to_representation(self, value):
@@ -41,21 +48,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         fields = ('id', 'user', 'rating', 'comment', 'created_at')
 
 class HotelSerializer(serializers.ModelSerializer):
-    images = ImageSerializer(many=True, read_only=True)
+    images = serializers.SerializerMethodField()
+    features = FeatureSerializer(many=True, read_only=True)
+    amenities = serializers.SerializerMethodField()
     rooms = RoomSerializer(many=True, read_only=True)
-    reviews = ReviewSerializer(many=True, read_only=True)
     photo_url = serializers.SerializerMethodField()
-    amenities = AmenitiesField()
 
     class Meta:
         model = Hotel
-        fields = (
-            'id', 'name', 'stars', 'address', 'website', 'description', 
-            'price_per_night', 'availability_start_date', 'availability_end_date', 
-            'features', 'images', 'rooms', 'photo_url', 'guest_score', 
-            'distance_to_center', 'amenities', 'contact_phone', 'contact_email',
-            'number_of_adults', 'check_in_time', 'check_out_time', 'reviews'
-        )
+        fields = [
+            'id', 'name', 'stars', 'price_per_night', 'availability_start_date',
+            'availability_end_date', 'features', 'amenities', 'address', 'website',
+            'description', 'guest_score', 'distance_to_center', 'contact_phone',
+            'contact_email', 'number_of_adults', 'check_in_time', 'check_out_time',
+            'images', 'rooms', 'photo_url'
+        ]
+
+    def get_images(self, obj):
+        return [{'id': img.id, 'image': img.image.url} for img in obj.images.all()]
 
     def get_photo_url(self, obj):
         if obj.images.exists():
@@ -64,6 +74,21 @@ class HotelSerializer(serializers.ModelSerializer):
                 return request.build_absolute_uri(obj.images.first().image.url)
             return obj.images.first().image.url
         return None
+
+    def get_amenities(self, obj):
+        return [
+            feature.name for feature in obj.features.filter(is_amenity=True)
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        # Convert features to just a list of feature names (non-amenities)
+        data['features'] = [
+            feature['name'] 
+            for feature in data['features'] 
+            if not feature['is_amenity']
+        ]
+        return data
 
 class BookingSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField()

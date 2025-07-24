@@ -17,6 +17,7 @@ import HotelDashboardPage from "./pages/HotelDashboardPage";
 import HotelDetailsPage from "./pages/HotelDetailsPage";
 import BookingPage from "./pages/BookingPage";
 import BookingsPage from "./pages/BookingsPage";
+import FavoritesPage from "./pages/FavoritesPage";
 
 function App() {
   return (
@@ -37,15 +38,13 @@ function App() {
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/hotel-dashboard" element={<HotelDashboardPage />} />
-              <Route
-                path="/hotel/search/:hotelId"
-                element={<HotelDetailsPage />}
-              />
+              <Route path="/hotel/:hotelId" element={<HotelDetailsPage />} />
               <Route
                 path="/hotel/:hotelId/room/:roomId/book"
                 element={<BookingPage />}
               />
               <Route path="/bookings" element={<BookingsPage />} />
+              <Route path="/favorites" element={<FavoritesPage />} />
             </Routes>
           </main>
           <Footer />

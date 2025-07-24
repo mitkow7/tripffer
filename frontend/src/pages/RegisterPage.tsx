@@ -1,7 +1,22 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Mail, Lock, User, Plane } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  User,
+  Plane,
+  Wifi,
+  Car,
+  Waves,
+  Heart,
+  Dumbbell,
+  UtensilsCrossed,
+  BellRing,
+  Wine,
+  Wind,
+  Building2,
+} from "lucide-react";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useRegister } from "../hooks/useApi";
@@ -17,11 +32,42 @@ interface RegisterFormData {
   address?: string;
   website?: string;
   description?: string;
+  amenities?: string[];
 }
+
+const HOTEL_AMENITIES = [
+  { id: "wifi", label: "WiFi", icon: <Wifi className="w-5 h-5" /> },
+  { id: "parking", label: "Parking", icon: <Car className="w-5 h-5" /> },
+  { id: "pool", label: "Pool", icon: <Waves className="w-5 h-5" /> },
+  { id: "spa", label: "Spa", icon: <Heart className="w-5 h-5" /> },
+  { id: "gym", label: "Gym", icon: <Dumbbell className="w-5 h-5" /> },
+  {
+    id: "restaurant",
+    label: "Restaurant",
+    icon: <UtensilsCrossed className="w-5 h-5" />,
+  },
+  {
+    id: "room_service",
+    label: "Room Service",
+    icon: <BellRing className="w-5 h-5" />,
+  },
+  { id: "bar", label: "Bar", icon: <Wine className="w-5 h-5" /> },
+  {
+    id: "air_conditioning",
+    label: "Air Conditioning",
+    icon: <Wind className="w-5 h-5" />,
+  },
+  {
+    id: "conference_room",
+    label: "Conference Room",
+    icon: <Building2 className="w-5 h-5" />,
+  },
+];
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const {
     register,
     handleSubmit,
@@ -37,38 +83,38 @@ const RegisterPage: React.FC = () => {
     try {
       setError(null);
 
-      const registrationData: any = {
+      const registrationData = {
         email: data.email,
-        username: data.email,
+        username: data.email, // Use email as username
         first_name: data.firstName,
         last_name: data.lastName,
         password: data.password,
         password_confirm: data.confirmPassword,
         role: data.role,
+        ...(data.role === "HOTEL" && {
+          hotel: {
+            name: data.hotelName || "",
+            address: data.address || "",
+            website: data.website || "",
+            description: data.description || "",
+            amenities: selectedAmenities,
+          },
+        }),
       };
 
-      if (data.role === "HOTEL") {
-        registrationData.hotel = {
-          name: data.hotelName,
-          address: data.address,
-          website: data.website,
-          description: data.description,
-        };
-      }
+      console.log("Registration data:", registrationData);
 
       await registerMutation.mutateAsync(registrationData);
       navigate("/login");
     } catch (error) {
+      console.error("Registration error:", error);
       if (error instanceof Error) {
         try {
           const errorData = JSON.parse(error.message);
-          // Handle specific error messages
           if (errorData.email) {
             setError(`Email error: ${errorData.email[0]}`);
           } else if (errorData.password) {
             setError(`Password error: ${errorData.password[0]}`);
-          } else if (errorData.username) {
-            setError(`Username error: ${errorData.username[0]}`);
           } else if (errorData.first_name) {
             setError(`First name error: ${errorData.first_name[0]}`);
           } else if (errorData.last_name) {
@@ -79,8 +125,14 @@ const RegisterPage: React.FC = () => {
             );
           } else if (errorData.non_field_errors) {
             setError(errorData.non_field_errors[0]);
+          } else if (typeof errorData === "object") {
+            const firstError = Object.values(errorData)[0];
+            if (Array.isArray(firstError)) {
+              setError(firstError[0]);
+            } else {
+              setError(String(firstError));
+            }
           } else {
-            // If there's a general error message
             setError(
               typeof errorData === "string"
                 ? errorData
@@ -94,6 +146,14 @@ const RegisterPage: React.FC = () => {
         setError("Registration failed. Please try again.");
       }
     }
+  };
+
+  const handleAmenityToggle = (amenity: string) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenity)
+        ? prev.filter((a) => a !== amenity)
+        : [...prev, amenity]
+    );
   };
 
   return (
@@ -234,6 +294,59 @@ const RegisterPage: React.FC = () => {
                 error={errors.description?.message}
                 icon={<User className="w-5 h-5 text-gray-400" />}
               />
+
+              <div className="space-y-4">
+                <label className="block text-lg font-semibold text-gray-800">
+                  Hotel Amenities
+                </label>
+                <p className="text-sm text-gray-600 mb-4">
+                  Select the amenities available at your hotel
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  {HOTEL_AMENITIES.map((amenity) => (
+                    <label
+                      key={amenity.id}
+                      className={`flex items-center p-4 rounded-lg border transition-all cursor-pointer ${
+                        selectedAmenities.includes(amenity.id)
+                          ? "bg-blue-50 border-blue-500 shadow-sm"
+                          : "bg-white border-gray-200 hover:border-blue-200 hover:bg-blue-50/50"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={selectedAmenities.includes(amenity.id)}
+                        onChange={() => handleAmenityToggle(amenity.id)}
+                      />
+                      <div className="flex items-center">
+                        <div
+                          className={`text-blue-500 mr-3 ${
+                            selectedAmenities.includes(amenity.id)
+                              ? "scale-110 transform"
+                              : ""
+                          }`}
+                        >
+                          {amenity.icon}
+                        </div>
+                        <span
+                          className={`text-sm ${
+                            selectedAmenities.includes(amenity.id)
+                              ? "text-blue-700 font-medium"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {amenity.label}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                {selectedAmenities.length === 0 && (
+                  <p className="text-sm text-red-500 mt-2">
+                    Please select at least one amenity
+                  </p>
+                )}
+              </div>
             </>
           )}
 
@@ -241,6 +354,7 @@ const RegisterPage: React.FC = () => {
             type="submit"
             className="w-full"
             loading={registerMutation.isPending}
+            disabled={role === "HOTEL" && selectedAmenities.length === 0}
           >
             Create Account
           </Button>

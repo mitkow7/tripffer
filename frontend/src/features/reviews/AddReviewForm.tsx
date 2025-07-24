@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../config/api";
 import Button from "../../components/ui/Button";
-import { Star, AlertTriangle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import StarRatingInput from "../../components/ui/StarRatingInput";
 
 interface AddReviewFormProps {
   hotelId: string;
@@ -36,7 +37,6 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({
     formState: { errors },
   } = useForm();
   const addReviewMutation = useAddReview();
-  const [hoverRating, setHoverRating] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
 
   const rating = watch("rating", 0);
@@ -67,29 +67,10 @@ const AddReviewForm: React.FC<AddReviewFormProps> = ({
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Your Rating
         </label>
-        <div className="flex items-center">
-          {[...Array(5)].map((_, index) => {
-            const ratingValue = index + 1;
-            return (
-              <button
-                type="button"
-                key={ratingValue}
-                onClick={() => setValue("rating", ratingValue)}
-                onMouseEnter={() => setHoverRating(ratingValue)}
-                onMouseLeave={() => setHoverRating(0)}
-                className="focus:outline-none"
-              >
-                <Star
-                  className={`h-8 w-8 cursor-pointer ${
-                    ratingValue <= (hoverRating || rating)
-                      ? "text-yellow-400 fill-current"
-                      : "text-gray-300"
-                  }`}
-                />
-              </button>
-            );
-          })}
-        </div>
+        <StarRatingInput
+          rating={rating}
+          onRatingChange={(newRating) => setValue("rating", newRating)}
+        />
         <input
           type="hidden"
           {...register("rating", { required: "Rating is required" })}

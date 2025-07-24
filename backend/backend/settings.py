@@ -45,7 +45,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'api',
     'accounts',
-    'hotels',  # Add the hotels app
+    'hotels',
 ]
 
 MIDDLEWARE = [

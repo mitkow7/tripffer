@@ -23,6 +23,31 @@ const SearchPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const fetchHotels = async (params = {}) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await api.get("hotels/search/", { params });
+      setHotels(response.data);
+    } catch (err: any) {
+      setError(
+        err.response?.data?.error || "Failed to fetch hotels. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+      setHasSearched(true);
+    }
+  };
+
+  // Initial load - fetch all hotels
+  useEffect(() => {
+    if (!location.search) {
+      fetchHotels();
+    }
+  }, []);
+
+  // Handle search params changes
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const city = params.get("destination") || "";
@@ -34,11 +59,7 @@ const SearchPage: React.FC = () => {
 
     setSearchParams({ city, checkIn, checkOut, adults, beds, currency });
 
-    const fetchHotels = async () => {
-      setIsLoading(true);
-      setError(null);
-      setHotels([]);
-
+    if (location.search) {
       const apiParams = {
         city,
         check_in: checkIn,
@@ -46,26 +67,7 @@ const SearchPage: React.FC = () => {
         adults,
         beds,
       };
-
-      try {
-        const response = await api.get("hotels/search/", { params: apiParams });
-        setHotels(response.data);
-      } catch (err: any) {
-        setError(
-          err.response?.data?.error ||
-            "Failed to fetch hotels. Please try again."
-        );
-      } finally {
-        setIsLoading(false);
-        setHasSearched(true);
-      }
-    };
-
-    if (city) {
-      fetchHotels();
-    } else {
-      setHotels([]);
-      setHasSearched(false);
+      fetchHotels(apiParams);
     }
   }, [location.search]);
 
@@ -78,7 +80,9 @@ const SearchPage: React.FC = () => {
 
   const handleSearch = () => {
     const params = new URLSearchParams();
-    params.set("destination", searchParams.city);
+    if (searchParams.city) {
+      params.set("destination", searchParams.city);
+    }
     if (searchParams.checkIn) {
       params.set("checkIn", searchParams.checkIn);
     }
@@ -107,7 +111,7 @@ const SearchPage: React.FC = () => {
           <aside className="lg:col-span-1">
             <div className="sticky top-24">
               <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-xl font-bold mb-4">Search Again</h2>
+                <h2 className="text-xl font-bold mb-4">Search Hotels</h2>
                 <HotelSearch
                   searchParams={searchParams}
                   onSearchParamChange={handleSearchParamChange}
@@ -129,21 +133,26 @@ const SearchPage: React.FC = () => {
                 {error}
               </div>
             ) : hotels.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {hotels.map((hotel) => (
-                  <SearchResults key={hotel.id} hotel={hotel} nights={nights} />
-                ))}
-              </div>
+              <>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                  {searchParams.city
+                    ? `Hotels in ${searchParams.city}`
+                    : "All Available Hotels"}
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {hotels.map((hotel) => (
+                    <SearchResults
+                      key={hotel.id}
+                      hotel={hotel}
+                      nights={nights}
+                    />
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="text-center text-gray-500 py-16">
-                <h3 className="text-2xl font-semibold">
-                  {hasSearched ? "No hotels found" : "No hotels available"}
-                </h3>
-                <p>
-                  {hasSearched
-                    ? "Try adjusting your search criteria."
-                    : "Please check back later."}
-                </p>
+                <h3 className="text-2xl font-semibold">No hotels found</h3>
+                <p>Try adjusting your search criteria.</p>
               </div>
             )}
           </main>

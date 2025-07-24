@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import ImageViewer from "./ImageViewer";
 
 interface ImageGridProps {
   images: { id: string | number; image: string }[];
@@ -6,6 +7,10 @@ interface ImageGridProps {
 }
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null
+  );
+
   if (!images || images.length === 0) {
     return (
       <div className="bg-gray-200 h-96 w-full rounded-lg flex items-center justify-center">
@@ -18,38 +23,62 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
   const otherImages = images.slice(1, 5);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-96">
-      <div className="h-full w-full">
-        <img
-          src={mainImage.image}
-          alt="Main hotel view"
-          className="w-full h-full object-cover rounded-l-lg"
-        />
-      </div>
-      <div className="grid grid-cols-2 gap-2 h-full">
-        {otherImages.map((img, index) => (
-          <div key={img.id} className="h-full w-full">
+    <>
+      <div className="relative h-[450px] rounded-xl overflow-hidden group">
+        <div className="grid grid-cols-4 grid-rows-2 gap-2 h-full">
+          <div
+            className="col-span-2 row-span-2 cursor-pointer overflow-hidden"
+            onClick={() => setSelectedImageIndex(0)}
+          >
             <img
-              src={img.image}
-              alt={`Hotel view ${index + 2}`}
-              className={`w-full h-full object-cover ${
-                index === 1 ? "rounded-tr-lg" : ""
-              } ${index === 3 ? "rounded-br-lg" : ""}`}
+              src={mainImage.image}
+              alt="Hotel view"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-        ))}
-        {images.length > 5 && (
-          <div className="relative h-full w-full">
-            <button
-              onClick={onShowAll}
-              className="absolute inset-0 w-full h-full bg-black bg-opacity-50 text-white flex items-center justify-center text-lg font-bold hover:bg-opacity-70 transition rounded-br-lg"
+          {otherImages.slice(0, 2).map((img, index) => (
+            <div
+              key={img.id}
+              className="overflow-hidden cursor-pointer"
+              onClick={() => setSelectedImageIndex(index + 1)}
             >
-              Show all photos
-            </button>
-          </div>
-        )}
+              <img
+                src={img.image}
+                alt="Hotel view"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+          ))}
+          {otherImages.slice(2, 4).map((img, index) => (
+            <div
+              key={img.id}
+              className="overflow-hidden cursor-pointer"
+              onClick={() => setSelectedImageIndex(index + 3)}
+            >
+              <img
+                src={img.image}
+                alt="Hotel view"
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+          ))}
+        </div>
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        <button
+          onClick={onShowAll}
+          className="absolute bottom-4 right-4 bg-white text-sm font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-gray-100 transition-all"
+        >
+          Show all photos
+        </button>
       </div>
-    </div>
+
+      <ImageViewer
+        images={images}
+        initialIndex={selectedImageIndex || 0}
+        isOpen={selectedImageIndex !== null}
+        onClose={() => setSelectedImageIndex(null)}
+      />
+    </>
   );
 };
 

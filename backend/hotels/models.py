@@ -2,6 +2,28 @@ from django.db import models
 from django.conf import settings
 from .choices import RoomType
 
+
+class Feature(models.Model):
+    """
+    Model representing a hotel feature or amenity
+    """
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+    )
+    is_amenity = models.BooleanField(
+        default=False,
+        help_text="True if this is an amenity, False if it's a feature",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+
+
 class Hotel(models.Model):
     """
     Model representing a hotel, linked to a user with the 'HOTEL' role.
@@ -32,10 +54,10 @@ class Hotel(models.Model):
         blank=True,
         null=True,
     )
-    features = models.TextField(
+    features = models.ManyToManyField(
+        Feature,
+        related_name='hotels',
         blank=True,
-        null=True,
-        help_text="Comma-separated list of features (e.g., Free WiFi, Pool, Gym)",
     )
     address = models.TextField()
     website = models.URLField(
@@ -53,11 +75,6 @@ class Hotel(models.Model):
     distance_to_center = models.FloatField(
         blank=True,
         null=True,
-    )
-    amenities = models.TextField(
-        blank=True,
-        null=True,
-        help_text="Comma-separated list of amenities",
     )
     contact_phone = models.CharField(
         max_length=20,

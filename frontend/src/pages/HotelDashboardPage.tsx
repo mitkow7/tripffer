@@ -26,10 +26,13 @@ import { Room } from "../types/api";
 
 const featureIcons: { [key: string]: React.ReactElement } = {
   "free wifi": <Wifi className="w-5 h-5 mr-2" />,
-  pool: <Utensils className="w-5 h-5 mr-2" />, // No pool icon, using utensils as placeholder
-  gym: <Building className="w-5 h-5 mr-2" />, // No gym icon, using building as placeholder
+  pool: <Utensils className="w-5 h-5 mr-2" />,
+  gym: <Building className="w-5 h-5 mr-2" />,
   "free parking": <ParkingCircle className="w-5 h-5 mr-2" />,
   "air conditioning": <Wind className="w-5 h-5 mr-2" />,
+  restaurant: <Utensils className="w-5 h-5 mr-2" />,
+  spa: <Wind className="w-5 h-5 mr-2" />,
+  "room service": <Users className="w-5 h-5 mr-2" />,
 };
 
 const InfoCard: React.FC<{
@@ -68,11 +71,40 @@ const HotelDashboardPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <h1 className="text-2xl font-bold text-red-600">Error</h1>
-        <p>
-          There was an error loading your hotel data. Please try again later.
-        </p>
+      <div className="container mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">
+            Error Loading Hotel Dashboard
+          </h1>
+          <p className="text-gray-600 mb-4">
+            {error instanceof Error
+              ? error.message
+              : "There was an error loading your hotel data. Please try again later."}
+          </p>
+          {!localStorage.getItem("auth_token") && (
+            <p className="text-gray-500">
+              Please make sure you are logged in to access your hotel dashboard.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!hotel) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-md p-6 text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">
+            No Hotel Profile Found
+          </h1>
+          <p className="text-gray-600 mb-2">
+            You haven't created a hotel profile yet.
+          </p>
+          <p className="text-gray-500">
+            Please complete your hotel registration to manage your dashboard.
+          </p>
+        </div>
       </div>
     );
   }
@@ -142,19 +174,37 @@ const HotelDashboardPage: React.FC = () => {
 
                 <InfoCard title="Features" icon={<CheckSquare />}>
                   <div className="flex flex-wrap gap-4">
-                    {hotel.features
-                      ?.split(",")
-                      .map((feature: string, index: number) => (
-                        <div
-                          key={index}
-                          className="flex items-center bg-gray-200 text-gray-800 px-4 py-2 rounded-full"
-                        >
-                          {featureIcons[feature.trim().toLowerCase()] || (
-                            <CheckSquare className="w-5 h-5 mr-2" />
-                          )}
-                          <span>{feature.trim()}</span>
-                        </div>
-                      ))}
+                    {[
+                      ...(Array.isArray(hotel.features)
+                        ? hotel.features
+                        : typeof hotel.features === "string"
+                        ? hotel.features.split(",")
+                        : []),
+                      ...(hotel.amenities || []),
+                    ]
+                      .filter((item) => item && item.trim())
+                      .map((item: string, index: number) => {
+                        const formattedItem = item
+                          .trim()
+                          .split("_")
+                          .map(
+                            (word) =>
+                              word.charAt(0).toUpperCase() +
+                              word.slice(1).toLowerCase()
+                          )
+                          .join(" ");
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center bg-gray-200 text-gray-800 px-4 py-2 rounded-full"
+                          >
+                            {featureIcons[item.trim().toLowerCase()] || (
+                              <CheckSquare className="w-5 h-5 mr-2" />
+                            )}
+                            <span>{formattedItem}</span>
+                          </div>
+                        );
+                      })}
                   </div>
                 </InfoCard>
                 <InfoCard title="Rooms" icon={<Building />}>

@@ -72,7 +72,7 @@ const HotelImage = ({
 const SearchResults = ({ hotel, nights }: SearchResultsProps) => {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl group">
-      <Link to={`/hotel/search/${hotel.id}`} className="block">
+      <Link to={`/hotel/${hotel.id}`} className="block">
         <HotelImage
           hotelName={hotel.name}
           photoUrl={hotel.photo_url}

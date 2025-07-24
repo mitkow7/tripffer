@@ -33,6 +33,8 @@ interface FormData {
   hotelName?: string;
   address?: string;
   website?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   pricePerNight?: number;
   availabilityStartDate?: string;
   availabilityEndDate?: string;
@@ -63,7 +65,7 @@ interface PreferenceSettings {
 }
 
 const SettingsPage: React.FC = () => {
-  const { user, isLoading, error, refetch } = useCurrentUser();
+  const { data: user, isLoading, error, refetch } = useCurrentUser() as any;
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications" | "preferences" | "privacy"
   >("profile");
@@ -90,6 +92,8 @@ const SettingsPage: React.FC = () => {
       hotelName: "",
       address: "",
       website: "",
+      contactEmail: "",
+      contactPhone: "",
       pricePerNight: 0,
       availabilityStartDate: "",
       availabilityEndDate: "",
@@ -106,6 +110,8 @@ const SettingsPage: React.FC = () => {
           hotelName: user.hotel?.name || "",
           address: user.hotel?.address || "",
           website: user.hotel?.website || "",
+          contactEmail: user.hotel?.contact_email || "",
+          contactPhone: user.hotel?.contact_phone || "",
           pricePerNight: user.hotel?.price_per_night || 0,
           availabilityStartDate: user.hotel?.availability_start_date || "",
           availabilityEndDate: user.hotel?.availability_end_date || "",
@@ -208,6 +214,8 @@ const SettingsPage: React.FC = () => {
         formData.append("hotel.name", data.hotelName || "");
         formData.append("hotel.address", data.address || "");
         formData.append("hotel.website", data.website || "");
+        formData.append("hotel.contact_email", data.contactEmail || "");
+        formData.append("hotel.contact_phone", data.contactPhone || "");
         formData.append(
           "hotel.price_per_night",
           data.pricePerNight?.toString() || ""
@@ -262,6 +270,8 @@ const SettingsPage: React.FC = () => {
           hotelName: updatedData.hotel?.name || "",
           address: updatedData.hotel?.address || "",
           website: updatedData.hotel?.website || "",
+          contactEmail: updatedData.hotel?.contact_email || "",
+          contactPhone: updatedData.hotel?.contact_phone || "",
           pricePerNight: updatedData.hotel?.price_per_night || 0,
           availabilityStartDate:
             updatedData.hotel?.availability_start_date || "",

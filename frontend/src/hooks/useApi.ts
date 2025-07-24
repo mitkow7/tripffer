@@ -122,17 +122,24 @@ export function useMyHotel() {
   return useQuery({
     queryKey: ["myHotel"],
     queryFn: async () => {
-      const response = await api.get("/hotels/my-hotel/");
-      return response.data;
+      try {
+        const response = await api.get("/hotels/my-hotel/");
+        return response.data;
+      } catch (error: unknown) {
+        console.error("Failed to fetch hotel data:", error);
+        throw error;
+      }
     },
     enabled: !!localStorage.getItem("auth_token"),
+    retry: 1,
   });
 }
 
 export function useHotelDetails(hotelId: string) {
   return useQuery({
     queryKey: ["hotelDetails", hotelId],
-    queryFn: () => api.get(`/hotels/search/${hotelId}`).then((res) => res.data),
+    queryFn: () =>
+      api.get(`/hotels/search/${hotelId}/`).then((res) => res.data),
     enabled: !!hotelId,
   });
 }
@@ -285,4 +292,33 @@ export function useChangePassword() {
     isPending,
     isError,
   };
+}
+
+export function useSubmitReview() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      hotelId,
+      rating,
+      comment,
+    }: {
+      hotelId: number;
+      rating: number;
+      comment: string;
+    }) => {
+      const response = await api.post(`/hotels/reviews/`, {
+        hotel_id: hotelId,
+        rating,
+        comment,
+      });
+      return response.data;
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate hotel details to refresh reviews
+      queryClient.invalidateQueries({
+        queryKey: ["hotelDetails", String(variables.hotelId)],
+      });
+    },
+  });
 }

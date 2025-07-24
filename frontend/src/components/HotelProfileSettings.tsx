@@ -3,10 +3,12 @@ import { useFormContext } from "react-hook-form";
 import Input from "./ui/Input";
 
 interface HotelProfileSettingsProps {
+  user: any;
   onImageChange: (files: FileList) => void;
 }
 
 const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
+  user,
   onImageChange,
 }) => {
   const {
@@ -42,6 +44,21 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
         {...register("address", { required: "Address is required" })}
         error={errors.address?.message as string}
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Input
+          label="Contact Email"
+          type="email"
+          {...register("contactEmail")}
+          error={errors.contactEmail?.message as string}
+        />
+        <Input
+          label="Contact Phone"
+          type="tel"
+          {...register("contactPhone")}
+          error={errors.contactPhone?.message as string}
+        />
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input

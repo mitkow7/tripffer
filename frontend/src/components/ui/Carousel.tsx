@@ -30,12 +30,23 @@ const Carousel: React.FC<CarouselProps> = ({ images, altText }) => {
   };
 
   return (
-    <div className="relative h-48 w-full">
-      <img
-        src={images[currentIndex].image}
-        alt={`${altText} ${currentIndex + 1}`}
-        className="h-full w-full object-cover"
-      />
+    <div className="relative h-full w-full group">
+      <div className="h-full w-full overflow-hidden">
+        <div
+          className="flex transition-transform duration-500 ease-in-out h-full"
+          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        >
+          {images.map((img) => (
+            <img
+              key={img.id}
+              src={img.image}
+              alt={altText}
+              className="w-full h-full object-cover flex-shrink-0"
+            />
+          ))}
+        </div>
+      </div>
+
       {images.length > 1 && (
         <>
           <button
@@ -44,9 +55,9 @@ const Carousel: React.FC<CarouselProps> = ({ images, altText }) => {
               e.stopPropagation();
               goToPrevious();
             }}
-            className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-75 transition"
+            className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-white/80 text-gray-800 p-1 rounded-full hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:outline-none"
           >
-            <ChevronLeft size={24} />
+            <ChevronLeft size={20} />
           </button>
           <button
             onClick={(e) => {
@@ -54,10 +65,25 @@ const Carousel: React.FC<CarouselProps> = ({ images, altText }) => {
               e.stopPropagation();
               goToNext();
             }}
-            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-75 transition"
+            className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-white/80 text-gray-800 p-1 rounded-full hover:bg-white transition-all opacity-0 group-hover:opacity-100 focus:outline-none"
           >
-            <ChevronRight size={24} />
+            <ChevronRight size={20} />
           </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentIndex(index);
+                }}
+                className={`h-1.5 w-1.5 rounded-full ${
+                  currentIndex === index ? "bg-white" : "bg-white/50"
+                } transition-all`}
+              />
+            ))}
+          </div>
         </>
       )}
     </div>
