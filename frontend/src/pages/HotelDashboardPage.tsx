@@ -50,16 +50,20 @@ const InfoCard: React.FC<{
 );
 
 const HotelDashboardPage: React.FC = () => {
-  const { data: hotel, isLoading, error, refetch } = useMyHotel();
+  const { data: hotels, isLoading, error, refetch } = useMyHotel();
+  const [selectedHotel, setSelectedHotel] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showAddRoomForm, setShowAddRoomForm] = useState(false);
   const [editingRoom, setEditingRoom] = useState<Room | null>(null);
 
   useEffect(() => {
-    if (hotel?.images?.length > 0 && !selectedImage) {
-      setSelectedImage(hotel.images[0].image);
+    if (hotels?.length > 0 && !selectedHotel) {
+      setSelectedHotel(hotels[0]);
+      if (hotels[0]?.images?.length > 0) {
+        setSelectedImage(hotels[0].images[0].image);
+      }
     }
-  }, [hotel, selectedImage]);
+  }, [hotels, selectedHotel]);
 
   if (isLoading) {
     return (
@@ -91,15 +95,15 @@ const HotelDashboardPage: React.FC = () => {
     );
   }
 
-  if (!hotel) {
+  if (!hotels || hotels.length === 0) {
     return (
       <div className="container mx-auto p-4">
         <div className="bg-white rounded-lg shadow-md p-6 text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">
-            No Hotel Profile Found
+            No Hotels Found
           </h1>
           <p className="text-gray-600 mb-2">
-            You haven't created a hotel profile yet.
+            You haven't created any hotel profiles yet.
           </p>
           <p className="text-gray-500">
             Please complete your hotel registration to manage your dashboard.
@@ -112,7 +116,30 @@ const HotelDashboardPage: React.FC = () => {
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        {hotel ? (
+        {/* Hotel Selection Dropdown */}
+        <div className="mb-6">
+          <select
+            className="w-full md:w-64 p-2 border border-gray-300 rounded-lg shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            value={selectedHotel?.id || ""}
+            onChange={(e) => {
+              const hotel = hotels.find(
+                (h: any) => h.id === Number(e.target.value)
+              );
+              setSelectedHotel(hotel);
+              if (hotel?.images?.length > 0) {
+                setSelectedImage(hotel.images[0].image);
+              }
+            }}
+          >
+            {hotels.map((hotel: any) => (
+              <option key={hotel.id} value={hotel.id}>
+                {hotel.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {selectedHotel && (
           <>
             <header className="mb-8 bg-white rounded-lg shadow-md p-6">
               <div className="flex flex-col md:flex-row items-start md:items-center">
@@ -120,7 +147,7 @@ const HotelDashboardPage: React.FC = () => {
                   {selectedImage ? (
                     <img
                       src={selectedImage}
-                      alt={hotel.name}
+                      alt={selectedHotel.name}
                       className="w-full h-48 rounded-lg object-cover"
                     />
                   ) : (
@@ -129,11 +156,11 @@ const HotelDashboardPage: React.FC = () => {
                     </div>
                   )}
                   <div className="flex mt-2 space-x-2">
-                    {hotel.images?.map((image: any) => (
+                    {selectedHotel.images?.map((image: any) => (
                       <img
                         key={image.id}
                         src={image.image}
-                        alt={hotel.name}
+                        alt={selectedHotel.name}
                         className={`w-16 h-16 rounded-lg object-cover cursor-pointer ${
                           selectedImage === image.image
                             ? "border-2 border-blue-500"
@@ -146,7 +173,7 @@ const HotelDashboardPage: React.FC = () => {
                 </div>
                 <div className="flex-grow md:pl-6">
                   <h1 className="text-4xl font-bold text-gray-800">
-                    {hotel.name}
+                    {selectedHotel.name}
                   </h1>
                   <p className="text-gray-600 mt-1">
                     Manage your hotel profile and bookings.
@@ -157,7 +184,9 @@ const HotelDashboardPage: React.FC = () => {
                     <Star
                       key={i}
                       className={`w-6 h-6 ${
-                        i < hotel.stars ? "text-yellow-400" : "text-gray-300"
+                        i < selectedHotel.stars
+                          ? "text-yellow-400"
+                          : "text-gray-300"
                       }`}
                       fill="currentColor"
                     />
@@ -169,18 +198,18 @@ const HotelDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-8">
                 <InfoCard title="Description" icon={<FileText />}>
-                  <p className="text-gray-600">{hotel.description}</p>
+                  <p className="text-gray-600">{selectedHotel.description}</p>
                 </InfoCard>
 
                 <InfoCard title="Features" icon={<CheckSquare />}>
                   <div className="flex flex-wrap gap-4">
                     {[
-                      ...(Array.isArray(hotel.features)
-                        ? hotel.features
-                        : typeof hotel.features === "string"
-                        ? hotel.features.split(",")
+                      ...(Array.isArray(selectedHotel.features)
+                        ? selectedHotel.features
+                        : typeof selectedHotel.features === "string"
+                        ? selectedHotel.features.split(",")
                         : []),
-                      ...(hotel.amenities || []),
+                      ...(selectedHotel.amenities || []),
                     ]
                       .filter((item) => item && item.trim())
                       .map((item: string, index: number) => {
@@ -209,7 +238,7 @@ const HotelDashboardPage: React.FC = () => {
                 </InfoCard>
                 <InfoCard title="Rooms" icon={<Building />}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                    {hotel.rooms?.map((room: Room) => (
+                    {selectedHotel.rooms?.map((room: Room) => (
                       <div
                         key={room.id}
                         className="bg-white rounded-xl shadow-md overflow-hidden transform hover:scale-105 transition-transform duration-300 ease-in-out"
@@ -299,18 +328,18 @@ const HotelDashboardPage: React.FC = () => {
                   <div className="space-y-4">
                     <div className="flex items-center text-gray-700">
                       <MapPin className="w-5 h-5 mr-3" />
-                      <span>{hotel.address}</span>
+                      <span>{selectedHotel.address}</span>
                     </div>
-                    {hotel.website && (
+                    {selectedHotel.website && (
                       <div className="flex items-center text-gray-700">
                         <Globe className="w-5 h-5 mr-3" />
                         <a
-                          href={hotel.website}
+                          href={selectedHotel.website}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline"
                         >
-                          {hotel.website}
+                          {selectedHotel.website}
                         </a>
                       </div>
                     )}
@@ -319,19 +348,19 @@ const HotelDashboardPage: React.FC = () => {
 
                 <InfoCard title="Pricing & Availability" icon={<DollarSign />}>
                   <div className="space-y-4">
-                    {hotel.price_per_night && (
+                    {selectedHotel.price_per_night && (
                       <div className="flex items-center text-gray-700">
                         <DollarSign className="w-5 h-5 mr-3 text-green-500" />
                         <div>
                           <p className="font-semibold text-gray-900">
-                            ${hotel.price_per_night}
+                            ${selectedHotel.price_per_night}
                           </p>
                           <p className="text-sm text-gray-600">per night</p>
                         </div>
                       </div>
                     )}
-                    {hotel.availability_start_date &&
-                      hotel.availability_end_date && (
+                    {selectedHotel.availability_start_date &&
+                      selectedHotel.availability_end_date && (
                         <div className="flex items-center text-gray-700">
                           <Calendar className="w-5 h-5 mr-3 text-blue-500" />
                           <div>
@@ -340,11 +369,11 @@ const HotelDashboardPage: React.FC = () => {
                             </p>
                             <p className="text-sm text-gray-600">
                               {new Date(
-                                hotel.availability_start_date
+                                selectedHotel.availability_start_date
                               ).toLocaleDateString()}{" "}
                               -{" "}
                               {new Date(
-                                hotel.availability_end_date
+                                selectedHotel.availability_end_date
                               ).toLocaleDateString()}
                             </p>
                           </div>
@@ -355,13 +384,6 @@ const HotelDashboardPage: React.FC = () => {
               </div>
             </div>
           </>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-lg text-gray-600">No hotel profile found.</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Please complete your hotel registration to manage your dashboard.
-            </p>
-          </div>
         )}
         {editingRoom && (
           <Modal isOpen={!!editingRoom} onClose={() => setEditingRoom(null)}>

@@ -86,20 +86,20 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MyHotelView(APIView):
     """
-    API view for managing the hotel associated with the current user.
+    API view for managing the hotels associated with the current user.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         try:
-            hotel = Hotel.objects.get(user=request.user)
-            serializer = HotelSerializer(hotel, context={'request': request})
+            hotels = Hotel.objects.filter(user=request.user)
+            if not hotels.exists():
+                return Response(
+                    {"error": "No hotels found for this user."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            serializer = HotelSerializer(hotels, many=True, context={'request': request})
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Hotel.DoesNotExist:
-            return Response(
-                {"error": "Hotel not found for this user."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
         except Exception as e:
             return Response(
                 {"error": f"An unexpected error occurred: {str(e)}"},

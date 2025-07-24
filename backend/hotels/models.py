@@ -28,10 +28,10 @@ class Hotel(models.Model):
     """
     Model representing a hotel, linked to a user with the 'HOTEL' role.
     """
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="hotel",
+        related_name="hotels",
         limit_choices_to={'role': 'HOTEL'}
     )
     name = models.CharField(

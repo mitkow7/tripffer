@@ -120,11 +120,11 @@ export function useCurrentUser() {
 
 export function useMyHotel() {
   return useQuery({
-    queryKey: ["myHotel"],
+    queryKey: ["myHotels"],
     queryFn: async () => {
       try {
         const response = await api.get("/hotels/my-hotel/");
-        return response.data;
+        return Array.isArray(response.data) ? response.data : [response.data];
       } catch (error: unknown) {
         console.error("Failed to fetch hotel data:", error);
         throw error;
