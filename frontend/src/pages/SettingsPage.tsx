@@ -16,30 +16,34 @@ import {
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { useCurrentUser, useChangePassword } from "../hooks/useApi";
+import {
+  useCurrentUser,
+  useChangePassword,
+  useUpdateProfile,
+} from "../hooks/useApi";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import UserProfileSettings from "../components/UserProfileSettings";
 import HotelProfileSettings from "../components/HotelProfileSettings";
 
 interface FormData {
   // User fields
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
   email?: string;
-  phone?: string;
-  dateOfBirth?: string;
+  phone_number?: string;
+  date_of_birth?: string;
   bio?: string;
   // Hotel fields
-  hotelName?: string;
-  address?: string;
-  website?: string;
-  contactEmail?: string;
-  contactPhone?: string;
-  pricePerNight?: number;
-  availabilityStartDate?: string;
-  availabilityEndDate?: string;
-  features?: string;
-  description?: string;
+  hotel_name?: string;
+  hotel_address?: string;
+  hotel_website?: string;
+  hotel_contact_email?: string;
+  hotel_contact_phone?: string;
+  hotel_price_per_night?: number;
+  hotel_availability_start_date?: string;
+  hotel_availability_end_date?: string;
+  hotel_features?: string;
+  hotel_description?: string;
 }
 
 interface SecurityFormData {
@@ -66,6 +70,7 @@ interface PreferenceSettings {
 
 const SettingsPage: React.FC = () => {
   const { data: user, isLoading, error, refetch } = useCurrentUser() as any;
+  const updateProfile = useUpdateProfile();
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications" | "preferences" | "privacy"
   >("profile");
@@ -83,22 +88,22 @@ const SettingsPage: React.FC = () => {
   // Form hooks
   const methods = useForm<FormData>({
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      first_name: "",
+      last_name: "",
       email: "",
-      phone: "",
-      dateOfBirth: "",
+      phone_number: "",
+      date_of_birth: "",
       bio: "",
-      hotelName: "",
-      address: "",
-      website: "",
-      contactEmail: "",
-      contactPhone: "",
-      pricePerNight: 0,
-      availabilityStartDate: "",
-      availabilityEndDate: "",
-      features: "",
-      description: "",
+      hotel_name: "",
+      hotel_address: "",
+      hotel_website: "",
+      hotel_contact_email: "",
+      hotel_contact_phone: "",
+      hotel_price_per_night: 0,
+      hotel_availability_start_date: "",
+      hotel_availability_end_date: "",
+      hotel_features: "",
+      hotel_description: "",
     },
   });
 
@@ -107,24 +112,25 @@ const SettingsPage: React.FC = () => {
     if (user) {
       if (user.role === "HOTEL") {
         methods.reset({
-          hotelName: user.hotel?.name || "",
-          address: user.hotel?.address || "",
-          website: user.hotel?.website || "",
-          contactEmail: user.hotel?.contact_email || "",
-          contactPhone: user.hotel?.contact_phone || "",
-          pricePerNight: user.hotel?.price_per_night || 0,
-          availabilityStartDate: user.hotel?.availability_start_date || "",
-          availabilityEndDate: user.hotel?.availability_end_date || "",
-          features: user.hotel?.features || "",
-          description: user.hotel?.description || "",
+          hotel_name: user.hotel?.name || "",
+          hotel_address: user.hotel?.address || "",
+          hotel_website: user.hotel?.website || "",
+          hotel_contact_email: user.hotel?.contact_email || "",
+          hotel_contact_phone: user.hotel?.contact_phone || "",
+          hotel_price_per_night: user.hotel?.price_per_night || 0,
+          hotel_availability_start_date:
+            user.hotel?.availability_start_date || "",
+          hotel_availability_end_date: user.hotel?.availability_end_date || "",
+          hotel_features: user.hotel?.features || "",
+          hotel_description: user.hotel?.description || "",
         });
       } else {
         methods.reset({
-          firstName: user.first_name || "",
-          lastName: user.last_name || "",
+          first_name: user.first_name || "",
+          last_name: user.last_name || "",
           email: user.email || "",
-          phone: user.profile?.phone_number || "",
-          dateOfBirth: user.profile?.date_of_birth || "",
+          phone_number: user.profile?.phone_number || "",
+          date_of_birth: user.profile?.date_of_birth || "",
           bio: user.profile?.bio || "",
         });
       }
@@ -208,87 +214,39 @@ const SettingsPage: React.FC = () => {
     setSaveStatus("saving");
     try {
       // Create FormData object to handle file upload
-      const formData = new FormData();
-
-      if (user.role === "HOTEL") {
-        formData.append("hotel.name", data.hotelName || "");
-        formData.append("hotel.address", data.address || "");
-        formData.append("hotel.website", data.website || "");
-        formData.append("hotel.contact_email", data.contactEmail || "");
-        formData.append("hotel.contact_phone", data.contactPhone || "");
-        formData.append(
-          "hotel.price_per_night",
-          data.pricePerNight?.toString() || ""
-        );
-        formData.append(
-          "hotel.availability_start_date",
-          data.availabilityStartDate || ""
-        );
-        formData.append(
-          "hotel.availability_end_date",
-          data.availabilityEndDate || ""
-        );
-        formData.append("hotel.features", data.features || "");
-        formData.append("hotel.description", data.description || "");
-      } else {
-        formData.append("first_name", data.firstName || "");
-        formData.append("last_name", data.lastName || "");
-        formData.append("email", data.email || "");
-        formData.append("profile.phone_number", data.phone || "");
-        formData.append("profile.date_of_birth", data.dateOfBirth || "");
-        formData.append("profile.bio", data.bio || "");
-      }
+      const formData: any = {
+        ...(user.role === "HOTEL"
+          ? {
+              "hotel.name": data.hotel_name,
+              "hotel.address": data.hotel_address,
+              "hotel.website": data.hotel_website,
+              "hotel.contact_email": data.hotel_contact_email,
+              "hotel.contact_phone": data.hotel_contact_phone,
+              "hotel.price_per_night": data.hotel_price_per_night,
+              "hotel.availability_start_date":
+                data.hotel_availability_start_date,
+              "hotel.availability_end_date": data.hotel_availability_end_date,
+              "hotel.features": data.hotel_features,
+              "hotel.description": data.hotel_description,
+            }
+          : {
+              first_name: data.first_name,
+              last_name: data.last_name,
+              email: data.email,
+              "profile.phone_number": data.phone_number,
+              "profile.date_of_birth": data.date_of_birth,
+              "profile.bio": data.bio,
+            }),
+      };
 
       // Add profile picture if one was selected
       if (user.role === "HOTEL" && tempProfileImages.length > 0) {
-        tempProfileImages.forEach((file) => {
-          formData.append("images", file);
-        });
+        formData.images = tempProfileImages;
       } else if (tempProfileImages.length > 0) {
-        formData.append("profile_picture", tempProfileImages[0]);
+        formData.profile_picture = tempProfileImages[0];
       }
 
-      const response = await fetch(
-        "http://localhost:8000/api/accounts/profile/",
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-            "X-Settings-Update": "true",
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const updatedData = await response.json();
-      if (user.role === "HOTEL") {
-        methods.reset({
-          hotelName: updatedData.hotel?.name || "",
-          address: updatedData.hotel?.address || "",
-          website: updatedData.hotel?.website || "",
-          contactEmail: updatedData.hotel?.contact_email || "",
-          contactPhone: updatedData.hotel?.contact_phone || "",
-          pricePerNight: updatedData.hotel?.price_per_night || 0,
-          availabilityStartDate:
-            updatedData.hotel?.availability_start_date || "",
-          availabilityEndDate: updatedData.hotel?.availability_end_date || "",
-          features: updatedData.hotel?.features || "",
-          description: updatedData.hotel?.description || "",
-        });
-      } else {
-        methods.reset({
-          firstName: updatedData.first_name,
-          lastName: updatedData.last_name,
-          email: updatedData.email,
-          phone: updatedData.profile?.phone_number || "",
-          dateOfBirth: updatedData.profile?.date_of_birth || "",
-          bio: updatedData.profile?.bio || "",
-        });
-      }
+      await updateProfile.mutateAsync(formData);
 
       // Clear temporary profile picture data
       if (tempProfilePictureUrl) {
@@ -884,7 +842,7 @@ const SettingsPage: React.FC = () => {
                     Once you delete your account, there is no going back. Please
                     be certain.
                   </p>
-                  <Button variant="danger" onClick={handleDeleteAccount}>
+                  <Button variant="destructive" onClick={handleDeleteAccount}>
                     <Trash2 className="w-4 h-4 mr-2" />
                     Delete Account
                   </Button>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import ImageViewer from "./ImageViewer";
+import { BACKEND_URL } from "../../config/api";
 
 interface ImageGridProps {
   images: { id: string | number; image: string }[];
@@ -31,7 +32,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
             onClick={() => setSelectedImageIndex(0)}
           >
             <img
-              src={mainImage.image}
+              src={`${BACKEND_URL}${mainImage.image}`}
               alt="Hotel view"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
@@ -43,7 +44,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
               onClick={() => setSelectedImageIndex(index + 1)}
             >
               <img
-                src={img.image}
+                src={`${BACKEND_URL}${img.image}`}
                 alt="Hotel view"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -56,7 +57,7 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
               onClick={() => setSelectedImageIndex(index + 3)}
             >
               <img
-                src={img.image}
+                src={`${BACKEND_URL}${img.image}`}
                 alt="Hotel view"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />

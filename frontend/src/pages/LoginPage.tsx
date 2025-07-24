@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { Mail, Lock, Plane } from "lucide-react";
+import { Mail, Lock, Plane, AlertCircle } from "lucide-react";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import { useLogin } from "../hooks/useApi";
@@ -18,6 +18,7 @@ const LoginPage: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
+    setError: setFormError,
   } = useForm<LoginFormData>({
     defaultValues: {
       remember_me: false,
@@ -35,8 +36,10 @@ const LoginPage: React.FC = () => {
       }
       // Reload the page to update the header
       window.location.reload();
-    } catch (error) {
-      // console.error("Login failed:", error); // Removed as per edit hint
+    } catch (error: any) {
+      const errorMessage =
+        error.response?.data?.error || "Email or password is incorrect";
+      setFormError("root", { message: errorMessage });
     }
   };
 
@@ -59,6 +62,13 @@ const LoginPage: React.FC = () => {
         </div>
 
         <div className="bg-white py-8 px-4 shadow-lg rounded-lg sm:px-10">
+          {(errors.root || loginMutation.isError) && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg flex items-center">
+              <AlertCircle className="w-5 h-5 mr-2" />
+              {errors.root?.message || "Email or password is incorrect"}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div>
               <Input
@@ -128,12 +138,6 @@ const LoginPage: React.FC = () => {
                 Sign in
               </Button>
             </div>
-
-            {loginMutation.isError && (
-              <div className="text-red-600 text-sm text-center">
-                Invalid email or password. Please try again.
-              </div>
-            )}
           </form>
         </div>
       </div>

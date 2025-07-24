@@ -1,5 +1,6 @@
 import React from "react";
 import { useChangePassword } from "../../hooks/useApi";
+import { AlertCircle, Check } from "lucide-react";
 
 export function ChangePasswordForm() {
   const [oldPassword, setOldPassword] = React.useState("");
@@ -8,7 +9,7 @@ export function ChangePasswordForm() {
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState(false);
 
-  const { mutateAsync: changePassword, isPending } = useChangePassword();
+  const changePasswordMutation = useChangePassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +22,7 @@ export function ChangePasswordForm() {
     }
 
     try {
-      await changePassword({
+      await changePasswordMutation.mutateAsync({
         old_password: oldPassword,
         new_password: newPassword,
         new_password_confirm: confirmPassword,
@@ -30,15 +31,8 @@ export function ChangePasswordForm() {
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
-    } catch (err) {
-      if (err instanceof Error) {
-        try {
-          const errorData = JSON.parse(err.message);
-          setError(Object.values(errorData).flat().join(" "));
-        } catch {
-          setError(err.message);
-        }
-      }
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -47,13 +41,17 @@ export function ChangePasswordForm() {
       <h2 className="text-2xl font-bold mb-6">Change Password</h2>
 
       {success && (
-        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
+        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-600 rounded-lg flex items-center">
+          <Check className="w-5 h-5 mr-2" />
           Password successfully changed!
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">{error}</div>
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg flex items-center">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          {error}
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,12 +108,16 @@ export function ChangePasswordForm() {
 
         <button
           type="submit"
-          disabled={isPending}
+          disabled={changePasswordMutation.isPending}
           className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-            isPending ? "opacity-50 cursor-not-allowed" : ""
+            changePasswordMutation.isPending
+              ? "opacity-50 cursor-not-allowed"
+              : ""
           }`}
         >
-          {isPending ? "Changing Password..." : "Change Password"}
+          {changePasswordMutation.isPending
+            ? "Changing Password..."
+            : "Change Password"}
         </button>
       </form>
     </div>

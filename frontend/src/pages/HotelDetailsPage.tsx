@@ -26,6 +26,7 @@ import {
   useToggleFavorite,
   useHotelDetails,
 } from "../hooks/useApi";
+import { BACKEND_URL } from "../config/api";
 import Carousel from "../components/ui/Carousel";
 import ReviewSection from "../features/reviews/ReviewSection";
 import ImageGrid from "../components/features/ImageGrid";
@@ -99,7 +100,7 @@ const HotelDetailsPage = () => {
         <div className="absolute inset-0">
           {hotel.images?.[0]?.image && (
             <img
-              src={hotel.images[0].image}
+              src={`${BACKEND_URL}${hotel.images[0].image}`}
               alt={hotel.name}
               className="w-full h-full object-cover opacity-60"
             />
@@ -327,11 +328,9 @@ const HotelDetailsPage = () => {
             </div>
 
             {/* Reviews Section */}
-            {hotel.reviews && hotel.id && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <ReviewSection reviews={hotel.reviews} hotelId={hotel.id} />
-              </div>
-            )}
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <ReviewSection hotelId={hotel.id} />
+            </div>
           </div>
 
           {/* Sidebar */}

@@ -1,7 +1,15 @@
 from datetime import date
 from rest_framework import serializers
 from .models import Hotel, HotelImage, Room, Booking, RoomImage, FavoriteHotel, Review, Feature
+from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
+User = get_user_model()
+
+class ReviewUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'last_name', 'role']
 
 class FeatureSerializer(serializers.ModelSerializer):
     class Meta:
@@ -41,11 +49,38 @@ class RoomSerializer(serializers.ModelSerializer):
         fields = ('id', 'price', 'description', 'bed_count', 'max_adults', 'room_type', 'images', 'hotel_name', 'hotel_address', 'hotel_id')
 
 class ReviewSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
-
+    user = ReviewUserSerializer(read_only=True)
+    hotel = serializers.PrimaryKeyRelatedField(
+        queryset=Hotel.objects.all(),
+        write_only=True
+    )
+    
     class Meta:
         model = Review
-        fields = ('id', 'user', 'rating', 'comment', 'created_at')
+        fields = ['id', 'user', 'hotel', 'rating', 'comment', 'created_at', 'updated_at']
+        read_only_fields = ['user', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        print("Validating review data:", data)  # Debug print
+        if 'hotel' not in data:
+            raise serializers.ValidationError({"hotel": "This field is required."})
+        if 'rating' not in data:
+            raise serializers.ValidationError({"rating": "This field is required."})
+        if not isinstance(data['rating'], int) or not (1 <= data['rating'] <= 5):
+            raise serializers.ValidationError({"rating": "Rating must be an integer between 1 and 5."})
+        if 'comment' not in data or not data['comment'].strip():
+            raise serializers.ValidationError({"comment": "This field is required and cannot be empty."})
+        return data
+
+    def create(self, validated_data):
+        print("Creating review with data:", validated_data)  # Debug print
+        try:
+            return super().create(validated_data)
+        except IntegrityError:
+            raise serializers.ValidationError({"detail": "You have already reviewed this hotel."})
+        except Exception as e:
+            print("Error creating review:", str(e))  # Debug print
+            raise
 
 class HotelSerializer(serializers.ModelSerializer):
     images = serializers.SerializerMethodField()

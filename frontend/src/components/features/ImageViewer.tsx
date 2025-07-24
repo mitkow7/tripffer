@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Modal from "../ui/Modal";
+import { BACKEND_URL } from "../../config/api";
 
 interface ImageViewerProps {
   images: { id: string | number; image: string }[];
@@ -46,7 +47,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
 
         <div className="relative max-w-7xl mx-auto max-h-[90vh] flex items-center justify-center">
           <img
-            src={images[currentIndex].image}
+            src={`${BACKEND_URL}${images[currentIndex].image}`}
             alt="Hotel view"
             className="max-h-[90vh] max-w-full object-contain"
           />

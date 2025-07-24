@@ -39,66 +39,94 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
         check_in_str = self.request.query_params.get('check_in')
         check_out_str = self.request.query_params.get('check_out')
 
-        # Start with a base queryset of all rooms
-        eligible_rooms = Room.objects.all()
-
-        # Filter rooms by bed count
-        if beds_str and beds_str.isdigit():
-            eligible_rooms = eligible_rooms.filter(bed_count__gte=int(beds_str))
-
-        # Filter rooms by adult capacity
-        if adults_str and adults_str.isdigit():
-            eligible_rooms = eligible_rooms.filter(max_adults__gte=int(adults_str))
-
-        # Exclude rooms that are unavailable for the selected dates
-        if check_in_str and check_out_str:
-            try:
-                check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
-                check_out_date = datetime.strptime(check_out_str, '%Y-%m-%d').date()
-
-                # Find IDs of rooms that have conflicting bookings
-                booked_room_ids = Booking.objects.filter(
-                    start_date__lt=check_out_date,
-                    end_date__gt=check_in_date
-                ).values_list('room_id', flat=True)
-
-                # Exclude these booked rooms
-                eligible_rooms = eligible_rooms.exclude(id__in=booked_room_ids)
-            except (ValueError, TypeError):
-                # Ignore invalid date formats
-                pass
-        
-        # Get the IDs of hotels that have at least one eligible room
-        hotel_ids_with_available_rooms = eligible_rooms.values_list('hotel_id', flat=True).distinct()
-
-        # Start with the base hotel queryset
+        # Start with all hotels
         queryset = Hotel.objects.all()
 
-        # Filter by city
-        if city:
-            queryset = queryset.filter(address__icontains=city)
+        # Only apply filters if search parameters are provided
+        if any([city, beds_str, adults_str, check_in_str, check_out_str]):
+            # Start with a base queryset of all rooms
+            eligible_rooms = Room.objects.all()
 
-        # Final filtering: only include hotels that have available rooms matching the criteria
-        queryset = queryset.filter(id__in=hotel_ids_with_available_rooms)
+            # Filter rooms by bed count
+            if beds_str and beds_str.isdigit():
+                eligible_rooms = eligible_rooms.filter(bed_count__gte=int(beds_str))
+
+            # Filter rooms by adult capacity
+            if adults_str and adults_str.isdigit():
+                eligible_rooms = eligible_rooms.filter(max_adults__gte=int(adults_str))
+
+            # Exclude rooms that are unavailable for the selected dates
+            if check_in_str and check_out_str:
+                try:
+                    check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
+                    check_out_date = datetime.strptime(check_out_str, '%Y-%m-%d').date()
+
+                    # Find IDs of rooms that have conflicting bookings
+                    booked_room_ids = Booking.objects.filter(
+                        start_date__lt=check_out_date,
+                        end_date__gt=check_in_date
+                    ).values_list('room_id', flat=True)
+
+                    # Exclude these booked rooms
+                    eligible_rooms = eligible_rooms.exclude(id__in=booked_room_ids)
+                except (ValueError, TypeError):
+                    # Ignore invalid date formats
+                    pass
+            
+            # Get the IDs of hotels that have at least one eligible room
+            hotel_ids_with_available_rooms = eligible_rooms.values_list('hotel_id', flat=True).distinct()
+
+            # Filter by city
+            if city:
+                queryset = queryset.filter(address__icontains=city)
+
+            # Final filtering: only include hotels that have available rooms matching the criteria
+            queryset = queryset.filter(id__in=hotel_ids_with_available_rooms)
 
         return queryset.distinct()
 
 
-class MyHotelView(APIView):
+class MyHotelView(viewsets.ViewSet):
     """
-    API view for managing the hotels associated with the current user.
+    ViewSet for managing the hotel associated with the current user.
     """
     permission_classes = [permissions.IsAuthenticated]
 
-    def get(self, request, *args, **kwargs):
+    def list(self, request):
+        """
+        Get the hotel associated with the current user.
+        """
         try:
-            hotels = Hotel.objects.filter(user=request.user)
-            if not hotels.exists():
+            if hasattr(request.user, 'hotel'):
+                serializer = HotelSerializer(request.user.hotel, context={'request': request})
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                {"error": "No hotel found for this user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=['get'])
+    def bookings(self, request):
+        """
+        Get all bookings for the hotel.
+        """
+        try:
+            if not hasattr(request.user, 'hotel'):
                 return Response(
-                    {"error": "No hotels found for this user."},
+                    {"error": "No hotel found for this user."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            serializer = HotelSerializer(hotels, many=True, context={'request': request})
+            
+            # Get all rooms for this hotel
+            rooms = request.user.hotel.rooms.all()
+            # Get all bookings for these rooms
+            bookings = Booking.objects.filter(room__in=rooms).order_by('-start_date')
+            serializer = BookingSerializer(bookings, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
@@ -117,8 +145,13 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Booking.objects.all()
         if self.request.user.is_authenticated:
-            queryset = queryset.filter(user=self.request.user)
-        return queryset
+            if hasattr(self.request.user, 'hotel'):
+                # If user is a hotel owner, return bookings for their hotel
+                rooms = self.request.user.hotel.rooms.all()
+                return queryset.filter(room__in=rooms)
+            # If user is a regular user, return their bookings
+            return queryset.filter(user=self.request.user)
+        return Booking.objects.none()
 
     def perform_create(self, serializer):
         room = serializer.validated_data['room']
@@ -145,7 +178,34 @@ class BookingViewSet(viewsets.ModelViewSet):
                 "detail": "This room is not available for the selected dates."
             })
             
-        serializer.save(user=self.request.user, status='confirmed')
+        serializer.save(user=self.request.user, status='pending')
+
+    def partial_update(self, request, *args, **kwargs):
+        booking = self.get_object()
+        
+        # Only allow hotel owners to update status
+        if not hasattr(request.user, 'hotel') or booking.room.hotel != request.user.hotel:
+            return Response(
+                {"error": "You don't have permission to update this booking."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Only allow updating the status field
+        if 'status' not in request.data:
+            return Response(
+                {"error": "Only status field can be updated."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate status value
+        valid_statuses = ['pending', 'confirmed', 'cancelled', 'completed']
+        if request.data['status'] not in valid_statuses:
+            return Response(
+                {"error": f"Status must be one of: {', '.join(valid_statuses)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=['post'])
     def reschedule(self, request, pk=None):
@@ -288,16 +348,63 @@ class ReviewViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(hotel_id=hotel_id)
         return queryset
 
+    def create(self, request, *args, **kwargs):
+        """
+        Create a review with detailed error handling.
+        If a review already exists, update it instead.
+        """
+        print("Received review data:", request.data)  # Debug print
+        
+        # Check if review already exists
+        try:
+            existing_review = Review.objects.get(
+                user=request.user,
+                hotel_id=request.data.get('hotel')
+            )
+            print("Found existing review, updating...")  # Debug print
+            serializer = self.get_serializer(existing_review, data=request.data)
+        except Review.DoesNotExist:
+            print("Creating new review...")  # Debug print
+            serializer = self.get_serializer(data=request.data)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+            print("Serializer validated data:", serializer.validated_data)  # Debug print
+            
+            if existing_review:
+                self.perform_update(serializer)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                self.perform_create(serializer)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+                
+        except serializers.ValidationError as e:
+            print("Validation error:", e.detail)  # Debug print
+            return Response({"detail": e.detail}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print("Unexpected error:", str(e))  # Debug print
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def perform_create(self, serializer):
         """
-        Associate the review with the logged-in user and a hotel.
+        Associate the review with the logged-in user.
         """
-        hotel_id = self.request.data.get('hotel_id')
         try:
-            hotel = Hotel.objects.get(id=hotel_id)
-            serializer.save(user=self.request.user, hotel=hotel)
-        except IntegrityError:
-            raise serializers.ValidationError({"detail": "You have already reviewed this hotel."})
-        except Hotel.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Hotel not found."})
+            serializer.save(user=self.request.user)
+        except Exception as e:
+            print("Error in perform_create:", str(e))  # Debug print
+            raise
+
+    def perform_update(self, serializer):
+        """
+        Update the existing review.
+        """
+        try:
+            serializer.save()
+        except Exception as e:
+            print("Error in perform_update:", str(e))  # Debug print
+            raise
             

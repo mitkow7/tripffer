@@ -28,10 +28,10 @@ class Hotel(models.Model):
     """
     Model representing a hotel, linked to a user with the 'HOTEL' role.
     """
-    user = models.ForeignKey(
+    user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="hotels",
+        related_name="hotel",
         limit_choices_to={'role': 'HOTEL'}
     )
     name = models.CharField(
@@ -98,6 +98,18 @@ class Hotel(models.Model):
         null=True,
     )
 
+    def update_average_price(self):
+        """
+        Calculate and update the average price per night based on all rooms
+        """
+        rooms = self.rooms.all()
+        if rooms:
+            avg_price = sum(room.price for room in rooms) / len(rooms)
+            self.price_per_night = avg_price
+        else:
+            self.price_per_night = None
+        self.save(update_fields=['price_per_night'])
+
     def __str__(self):
         return self.name
 
@@ -155,6 +167,17 @@ class Room(models.Model):
         if booking_id:
             overlapping_bookings = overlapping_bookings.exclude(id=booking_id)
         return not overlapping_bookings.exists()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update the hotel's average price whenever a room is saved
+        self.hotel.update_average_price()
+
+    def delete(self, *args, **kwargs):
+        hotel = self.hotel
+        super().delete(*args, **kwargs)
+        # Update the hotel's average price whenever a room is deleted
+        hotel.update_average_price()
 
     def __str__(self):
         return f"Room for {self.hotel.name}"

@@ -13,23 +13,37 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { useCurrentUser, useUserBookings, useFavorites } from "../hooks/useApi";
-import { Booking, FavoriteHotel } from "../types/api";
+
+interface Booking {
+  id: number;
+  type: "hotel";
+  status: string;
+  start_date: string;
+  end_date: string;
+  room: {
+    id: number;
+    hotel_name: string;
+    hotel_address: string;
+  };
+  total_price: number;
+}
+
+interface FavoriteHotel {
+  id: number;
+  hotel: {
+    id: number;
+    name: string;
+    address: string;
+    price_per_night: number;
+  };
+}
 
 const DashboardPage: React.FC = () => {
-  const { data: userData, isLoading: userLoading } = useCurrentUser();
-  const { data: bookingsData, isLoading: bookingsLoading } = useUserBookings();
-  const { data: favoritesData, isLoading: favoritesLoading } = useFavorites();
-  const user = userData?.data;
-  const bookings: Booking[] = bookingsData?.data || [];
-  const favorites: FavoriteHotel[] = favoritesData || [];
+  const { data: user, isLoading: userLoading } = useCurrentUser();
+  const { data: bookings = [], isLoading: bookingsLoading } = useUserBookings();
+  const { data: favorites = [], isLoading: favoritesLoading } = useFavorites();
 
-  const upcomingBookings = bookings.filter((booking) => {
-    if (booking.type === "trip" && booking.trip) {
-      return (
-        new Date(booking.trip.departureDate) > new Date() &&
-        (booking.status === "confirmed" || booking.status === "pending")
-      );
-    }
+  const upcomingBookings = bookings.filter((booking: Booking) => {
     if (booking.type === "hotel" && booking.room && booking.start_date) {
       return (
         new Date(booking.start_date) > new Date() &&
@@ -39,13 +53,7 @@ const DashboardPage: React.FC = () => {
     return false;
   });
 
-  const pastBookings = bookings.filter((booking) => {
-    if (booking.type === "trip" && booking.trip) {
-      return (
-        new Date(booking.trip.returnDate) < new Date() &&
-        booking.status === "confirmed"
-      );
-    }
+  const pastBookings = bookings.filter((booking: Booking) => {
     if (booking.type === "hotel" && booking.room && booking.end_date) {
       return (
         new Date(booking.end_date) < new Date() &&
@@ -158,8 +166,12 @@ const DashboardPage: React.FC = () => {
                 <LoadingSpinner size="sm" />
               ) : (
                 `$${bookings
-                  .filter((booking) => booking.status !== "cancelled")
-                  .reduce((sum, booking) => sum + booking.totalPrice, 0)
+                  .filter((booking: Booking) => booking.status !== "cancelled")
+                  .reduce(
+                    (sum: number, booking: Booking) =>
+                      sum + booking.total_price,
+                    0
+                  )
                   .toLocaleString()}`
               )
             }
@@ -274,7 +286,7 @@ const DashboardPage: React.FC = () => {
               <div className="flex justify-center py-12">
                 <LoadingSpinner />
               </div>
-            ) : favorites.length > 0 ? (
+            ) : favorites && favorites.length > 0 ? (
               <div className="space-y-4">
                 {favorites.slice(0, 3).map((fav: FavoriteHotel) => (
                   <Card key={fav.id} hover className="p-4 transition-shadow">
@@ -283,14 +295,14 @@ const DashboardPage: React.FC = () => {
                         {fav.hotel.name}
                       </h3>
                       <span className="text-sm text-blue-600 font-bold">
-                        ${fav.hotel.price_per_night}
+                        ${fav.hotel.price_per_night}/night
                       </span>
                     </div>
                     <div className="flex items-center text-sm text-gray-500 mb-2">
                       <MapPin className="w-4 h-4 mr-2" />
                       {fav.hotel.address}
                     </div>
-                    <Link to={`/hotel/search/${fav.hotel.id}`}>
+                    <Link to={`/hotel/${fav.hotel.id}`}>
                       <Button size="sm" variant="outline" className="w-full">
                         View Details
                       </Button>
@@ -304,9 +316,9 @@ const DashboardPage: React.FC = () => {
                 <h3 className="text-lg font-semibold">
                   Your wishlist is empty
                 </h3>
-                <p className="mb-4">Add trips you'd like to book someday.</p>
+                <p className="mb-4">Save hotels you'd like to book someday.</p>
                 <Link to="/search">
-                  <Button>Discover Trips</Button>
+                  <Button>Discover Hotels</Button>
                 </Link>
               </div>
             )}

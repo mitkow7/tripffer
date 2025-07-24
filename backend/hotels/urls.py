@@ -15,8 +15,8 @@ router.register(r"bookings", BookingViewSet, basename="booking")
 router.register(r"rooms", RoomViewSet, basename="room")
 router.register(r"favorites", FavoriteHotelViewSet, basename="favoritehotel")
 router.register(r"reviews", ReviewViewSet, basename="review")
+router.register(r"my-hotel", MyHotelView, basename="my-hotel")
 
 urlpatterns = [
-    path("my-hotel/", MyHotelView.as_view(), name="my-hotel"),
     path("", include(router.urls)),
 ] 

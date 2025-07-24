@@ -1,6 +1,40 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../config/api";
+import axios from "axios";
+
+interface UserProfile {
+  id: number;
+  phone_number?: string;
+  date_of_birth?: string;
+  bio?: string;
+  profile_picture?: string;
+}
+
+interface User {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+  profile?: UserProfile;
+}
+
+interface LoginResponse {
+  access: string;
+  refresh: string;
+  user: User;
+}
+
+interface ProfileUpdateData {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone_number?: string;
+  date_of_birth?: string;
+  bio?: string;
+  profile_picture?: File;
+}
 
 // Placeholder hooks for your custom backend integration
 // Replace these with your actual API calls when backend is ready
@@ -39,41 +73,35 @@ export function useFeaturedHotels() {
   });
 }
 
-export function useLogin() {
-  return {
-    mutateAsync: async (data: any) => {
-      try {
-        const response = await fetch(
-          "http://localhost:8000/api/accounts/login/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          }
-        );
+export const useLogin = () => {
+  const queryClient = useQueryClient();
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || "Login failed");
-        }
-
-        const responseData = await response.json();
-
-        if (responseData.access) {
-          localStorage.setItem("auth_token", responseData.access);
-        }
-
-        return responseData;
-      } catch (error) {
+  return useMutation({
+    mutationFn: async (data: {
+      email: string;
+      password: string;
+      remember_me?: boolean;
+    }) => {
+      const response = await axios.post<LoginResponse>(
+        "/api/accounts/login/",
+        data
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      localStorage.setItem("accessToken", data.access);
+      localStorage.setItem("refreshToken", data.refresh);
+      queryClient.setQueryData(["user"], data.user);
+    },
+    onError: (error: any) => {
+      if (error.response?.data?.error) {
         throw error;
+      } else {
+        throw new Error("Email or password is incorrect");
       }
     },
-    isPending: false,
-    isError: false,
-  };
-}
+  });
+};
 
 export function useRegister() {
   const [isPending, setIsPending] = React.useState(false);
@@ -112,19 +140,36 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ["user"],
     queryFn: async () => {
-      const response = await api.get("/accounts/profile/");
-      return response.data;
+      try {
+        const response = await api.get("/accounts/profile/");
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        throw error;
+      }
+    },
+    select: (data: User) => {
+      // Ensure profile data is properly structured
+      return {
+        ...data,
+        profile: data.profile || {
+          phone_number: "",
+          date_of_birth: "",
+          bio: "",
+          profile_picture: "",
+        },
+      };
     },
   });
 }
 
 export function useMyHotel() {
   return useQuery({
-    queryKey: ["myHotels"],
+    queryKey: ["myHotel"],
     queryFn: async () => {
       try {
         const response = await api.get("/hotels/my-hotel/");
-        return Array.isArray(response.data) ? response.data : [response.data];
+        return response.data;
       } catch (error: unknown) {
         console.error("Failed to fetch hotel data:", error);
         throw error;
@@ -155,11 +200,9 @@ export function useUserBookings() {
         totalPrice: booking.total_price,
       }));
 
-      return {
-        data: [...hotelBookings],
-      };
+      return hotelBookings;
     },
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled: !!localStorage.getItem("accessToken"),
   });
 }
 
@@ -217,7 +260,7 @@ export function useFavorites() {
       const response = await api.get("/hotels/favorites/");
       return response.data;
     },
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled: !!localStorage.getItem("accessToken"),
   });
 }
 
@@ -225,73 +268,93 @@ export function useToggleFavorite() {
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (hotelId: string) =>
-      api.post("/hotels/favorites/", { hotel_id: hotelId }),
+    mutationFn: async (hotelId: string) => {
+      try {
+        const response = await api.post("/hotels/favorites/", {
+          hotel_id: hotelId,
+        });
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "Failed to add to favorites"
+        );
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favoriteHotels"] });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (favoriteId: string) =>
-      api.delete(`/hotels/favorites/${favoriteId}/`),
+    mutationFn: async (favoriteId: string) => {
+      try {
+        const response = await api.delete(`/hotels/favorites/${favoriteId}/`);
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "Failed to remove from favorites"
+        );
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["favoriteHotels"] });
     },
   });
 
-  return (hotelId: string, isFavorited: boolean, favoriteId?: string) => {
-    if (isFavorited && favoriteId) {
-      deleteMutation.mutate(favoriteId);
-    } else {
-      createMutation.mutate(hotelId);
+  return async (hotelId: string, isFavorited: boolean, favoriteId?: string) => {
+    try {
+      if (isFavorited && favoriteId) {
+        await deleteMutation.mutateAsync(favoriteId);
+      } else {
+        await createMutation.mutateAsync(hotelId);
+      }
+    } catch (error) {
+      console.error("Failed to toggle favorite:", error);
+      throw error;
     }
   };
 }
 
 export function useChangePassword() {
-  const [isPending, setIsPending] = React.useState(false);
-  const [isError, setIsError] = React.useState(false);
-
-  return {
-    mutateAsync: async (data: {
+  return useMutation({
+    mutationFn: async (data: {
       old_password: string;
       new_password: string;
       new_password_confirm: string;
     }) => {
-      setIsPending(true);
-      setIsError(false);
       try {
-        const response = await fetch(
-          "http://localhost:8000/api/accounts/change-password/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-            },
-            body: JSON.stringify({
-              old_password: data.old_password,
-              new_password: data.new_password,
-              new_password_confirm: data.new_password_confirm,
-            }),
-          }
+        const response = await api.post("/accounts/change-password/", {
+          old_password: data.old_password,
+          new_password: data.new_password,
+          new_password_confirm: data.new_password_confirm,
+        });
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "Failed to change password"
         );
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          setIsError(true);
-          throw new Error(JSON.stringify(errorData));
-        }
-
-        return await response.json();
-      } finally {
-        setIsPending(false);
       }
     },
-    isPending,
-    isError,
-  };
+  });
+}
+
+export function useHotelReviews(hotelId: number) {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: ["hotelReviews", hotelId],
+    queryFn: async () => {
+      const response = await api.get(`/hotels/reviews/?hotel_id=${hotelId}`);
+      return response.data;
+    },
+    enabled: !!hotelId,
+  });
 }
 
 export function useSubmitReview() {
@@ -307,18 +370,113 @@ export function useSubmitReview() {
       rating: number;
       comment: string;
     }) => {
-      const response = await api.post(`/hotels/reviews/`, {
-        hotel_id: hotelId,
-        rating,
-        comment,
-      });
-      return response.data;
+      try {
+        console.log("Submitting review with data:", {
+          hotel: hotelId,
+          rating,
+          comment,
+        });
+        const response = await api.post("/hotels/reviews/", {
+          hotel: Number(hotelId),
+          rating: Number(rating),
+          comment: comment.trim(),
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error("Review submission error details:", {
+          error: error.response?.data || error,
+          status: error.response?.status,
+          requestData: error.config?.data,
+        });
+        // Throw a more informative error
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            error.message ||
+            "Failed to submit review"
+        );
+      }
     },
-    onSuccess: (_, variables) => {
-      // Invalidate hotel details to refresh reviews
+    onSuccess: (data, variables) => {
+      // Invalidate both the reviews list and the specific review
+      queryClient.invalidateQueries({
+        queryKey: ["hotelReviews", variables.hotelId],
+      });
       queryClient.invalidateQueries({
         queryKey: ["hotelDetails", String(variables.hotelId)],
       });
+      return data;
+    },
+  });
+}
+
+export function useHotelBookings() {
+  return useQuery({
+    queryKey: ["hotelBookings"],
+    queryFn: async () => {
+      const response = await api.get("/hotels/my-hotel/bookings/");
+      return response.data;
+    },
+    enabled: !!localStorage.getItem("auth_token"),
+  });
+}
+
+export function useUpdateBookingStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      bookingId,
+      status,
+    }: {
+      bookingId: string;
+      status: string;
+    }) => {
+      const response = await api.patch(`/hotels/bookings/${bookingId}/`, {
+        status,
+      });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hotelBookings"] });
+    },
+  });
+}
+
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: ProfileUpdateData) => {
+      try {
+        let formData = new FormData();
+
+        // Add all text fields
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined) {
+            if (key === "profile_picture" && value instanceof File) {
+              formData.append(key, value);
+            } else if (typeof value === "string") {
+              formData.append(key, value);
+            }
+          }
+        });
+
+        const response = await api.put("/accounts/profile/", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "Failed to update profile"
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
     },
   });
 }

@@ -1,59 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, User, Heart, Settings, LogOut, Plane } from "lucide-react";
+import {
+  Menu,
+  X,
+  User,
+  Heart,
+  Settings,
+  LogOut,
+  Plane,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
 import Button from "../ui/Button";
+import { useCurrentUser } from "../../hooks/useApi";
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [userLoading, setUserLoading] = useState(true);
-  const [userError, setUserError] = useState<string | null>(null);
+  const { data: user, isLoading: userLoading } = useCurrentUser();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        setUser(null);
-        setUserLoading(false);
-        return;
-      }
-
-      try {
-        setUserLoading(true);
-        setUserError(null);
-
-        const response = await fetch(
-          "http://localhost:8000/api/accounts/profile/",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          setUserLoading(false);
-          setUserError(null);
-        } else {
-          setUser(null);
-          setUserLoading(false);
-        }
-      } catch (err) {
-        setUser(null);
-        setUserLoading(false);
-        setUserError("Error fetching user");
-      }
-    };
-    fetchUser();
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem("auth_token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     navigate("/");
     window.location.reload();
   };
@@ -111,7 +80,10 @@ const Header: React.FC = () => {
           {/* User Menu */}
           <div className="flex items-center space-x-4">
             {userLoading ? (
-              <span className="text-gray-500 text-sm">Loading...</span>
+              <div className="animate-pulse flex space-x-2 items-center">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              </div>
             ) : user ? (
               <div className="relative">
                 <button
@@ -119,15 +91,21 @@ const Header: React.FC = () => {
                   className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
                 >
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                    <span className="text-white text-sm font-medium">
+                      {(
+                        user.first_name?.[0] ||
+                        user.email?.[0] ||
+                        "?"
+                      ).toUpperCase()}
+                    </span>
                   </div>
                   <span className="hidden sm:block">
-                    {user.first_name || user.username || user.email}
+                    {user.first_name || user.email?.split("@")[0]}
                   </span>
                 </button>
 
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <Link
                       to={
                         user?.role === "HOTEL"
@@ -159,18 +137,23 @@ const Header: React.FC = () => {
                 )}
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="hidden md:flex items-center space-x-2">
                 <Link to="/login">
-                  <Button variant="ghost" size="sm">
-                    Login
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center space-x-1"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Login</span>
                   </Button>
                 </Link>
                 <Link to="/register">
-                  <Button size="sm">Sign Up</Button>
+                  <Button size="sm" className="flex items-center space-x-1">
+                    <UserPlus className="w-4 h-4" />
+                    <span>Sign Up</span>
+                  </Button>
                 </Link>
-                {userError && (
-                  <span className="text-red-500 text-xs">{userError}</span>
-                )}
               </div>
             )}
 
@@ -234,6 +217,27 @@ const Header: React.FC = () => {
               >
                 Deals
               </Link>
+              {!user && !userLoading && (
+                <>
+                  <div className="border-t border-gray-200 my-2"></div>
+                  <Link
+                    to="/login"
+                    className="px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-md flex items-center space-x-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Login</span>
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-md flex items-center space-x-2"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Sign Up</span>
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         )}

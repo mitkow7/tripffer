@@ -35,32 +35,28 @@ class LoginView(APIView):
     View to handle user login.
     """
     permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
 
-    def post(self, request, *args, **kwargs):
-        serializer = LoginSerializer(data=request.data)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
-            # Pass both email as username and email to support both login methods
-            user = authenticate(request, username=email, email=email, password=password)
-            remember_me = serializer.validated_data.get('remember_me', False)
+            user = authenticate(email=email, password=password)
             
-            if user is not None:
+            if user:
                 refresh = RefreshToken.for_user(user)
-                if remember_me:
-                    refresh.set_exp(lifetime=timedelta(days=30))
-                    refresh.access_token.set_exp(lifetime=timedelta(days=7))
-                else:
-                    refresh.set_exp(lifetime=timedelta(days=7))
-                    refresh.access_token.set_exp(lifetime=timedelta(hours=12))
                 return Response({
-                    'user': UserSerializer(user).data,
-                    'refresh': str(refresh),
                     'access': str(refresh.access_token),
-                }, status=status.HTTP_200_OK)
-            return Response({
-                'error': 'Invalid credentials'
-            }, status=status.HTTP_401_UNAUTHORIZED)
+                    'refresh': str(refresh),
+                    'user': UserSerializer(user).data
+                })
+            
+            return Response(
+                {'error': 'Email or password is incorrect'},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -91,25 +87,41 @@ def user_profile(request):
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        is_settings_update = request.headers.get('X-Settings-Update', 'false') == 'true'
-        
-        # Handle regular profile picture
+        # Ensure user has a profile
+        if not hasattr(request.user, 'profile'):
+            UserProfile.objects.create(user=request.user)
+
+        # Handle profile picture
         profile_picture = request.FILES.get('profile_picture')
-        if profile_picture and is_settings_update:
-            if not hasattr(request.user, 'profile'):
-                UserProfile.objects.create(user=request.user)
+        if profile_picture:
             request.user.profile.profile_picture = profile_picture
             request.user.profile.save()
 
-        # Handle hotel image
-        hotel_image_data = request.FILES.get('hotel_image')
-        if hotel_image_data and is_settings_update and request.user.role == 'HOTEL':
-            hotel, created = Hotel.objects.get_or_create(user=request.user)
-            HotelImage.objects.create(hotel=hotel, image=hotel_image_data)
+        # Handle profile data
+        profile_data = {}
+        for field in ['phone_number', 'date_of_birth', 'bio']:
+            if field in request.data:
+                profile_data[field] = request.data[field]
+        
+        if profile_data:
+            for key, value in profile_data.items():
+                setattr(request.user.profile, key, value)
+            request.user.profile.save()
 
-        serializer = UserSerializer(request.user, data=request.data, partial=True, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Handle user data
+        user_data = {}
+        for field in ['first_name', 'last_name', 'email']:
+            if field in request.data:
+                user_data[field] = request.data[field]
+
+        if user_data:
+            serializer = UserSerializer(request.user, data=user_data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # Return updated user data
+        serializer = UserSerializer(request.user, context={'request': request})
+        return Response(serializer.data)
 

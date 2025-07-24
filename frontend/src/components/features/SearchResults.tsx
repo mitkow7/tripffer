@@ -96,13 +96,23 @@ const SearchResults = ({ hotel, nights }: SearchResultsProps) => {
             <div>
               <p className="text-sm text-gray-600">Price per night</p>
               <div className="flex items-center text-2xl font-bold text-gray-900">
-                <DollarSign className="h-6 w-6 mr-1 text-green-500" />
-                <span>{parseFloat(hotel.price_per_night).toFixed(2)}</span>
+                {hotel.price_per_night ? (
+                  <>
+                    <DollarSign className="h-6 w-6 mr-1 text-green-500" />
+                    <span>{parseFloat(hotel.price_per_night).toFixed(2)}</span>
+                  </>
+                ) : (
+                  <span className="text-base text-gray-600">
+                    Contact for pricing
+                  </span>
+                )}
               </div>
             </div>
             <div className="text-right">
               <p className="text-sm text-gray-600">
-                Total for {nights} night{nights > 1 ? "s" : ""}
+                {hotel.price_per_night && nights > 0
+                  ? `Total for ${nights} night${nights > 1 ? "s" : ""}`
+                  : "Check availability"}
               </p>
               <div className="inline-flex items-center font-semibold text-blue-600 hover:text-blue-800">
                 View Details
