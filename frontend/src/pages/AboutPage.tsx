@@ -2,6 +2,7 @@ import React from 'react';
 import { Users, Globe, Shield, Award, Heart, Zap } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import defaultAvatar from '../assets/default-avatar.png';
 
 const AboutPage: React.FC = () => {
   const stats = [
@@ -36,28 +37,10 @@ const AboutPage: React.FC = () => {
 
   const team = [
     {
-      name: 'Sarah Chen',
+      name: 'Martin Mitkov',
       role: 'CEO & Co-Founder',
-      image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      bio: 'Former travel industry executive with 15 years of experience building customer-centric travel solutions.',
-    },
-    {
-      name: 'Marcus Rodriguez',
-      role: 'CTO & Co-Founder',
-      image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      bio: 'Technology leader passionate about using AI and data to revolutionize how people discover and book travel.',
-    },
-    {
-      name: 'Emily Thompson',
-      role: 'Head of Partnerships',
-      image: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      bio: 'Travel industry veteran who has built relationships with providers across 6 continents.',
-    },
-    {
-      name: 'David Kim',
-      role: 'Head of Product',
-      image: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=300&h=300&fit=crop',
-      bio: 'Product strategist focused on creating intuitive experiences that make travel planning effortless.',
+      image: defaultAvatar,
+      bio: 'A software engineer with a passion for building scalable and efficient systems.',
     },
   ];
 
@@ -185,14 +168,16 @@ const AboutPage: React.FC = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
             <p className="text-xl text-gray-600">The passionate people behind Tripffer</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="flex justify-center">
             {team.map((member, index) => (
-              <Card key={index} className="p-6 text-center">
-                <img
-                  src={member.image}
-                  alt={member.name}
-                  className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
-                />
+              <Card key={index} className="p-6 text-center max-w-sm">
+                <div className="flex justify-center mb-4">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-32 h-32 rounded-full object-cover border-4 border-blue-100"
+                  />
+                </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-1">{member.name}</h3>
                 <p className="text-blue-600 font-medium mb-3">{member.role}</p>
                 <p className="text-gray-600 text-sm">{member.bio}</p>

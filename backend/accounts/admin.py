@@ -21,7 +21,6 @@ class UserProfileInline(TabularInline):
 class UserAdmin(ModelAdmin):
     list_display = (
         'id', 
-        'username', 
         'email', 
         'display_name', 
         'role_badge', 
@@ -29,8 +28,8 @@ class UserAdmin(ModelAdmin):
         'date_joined',
         'hotel_link'
     )
-    list_display_links = ('id', 'username', 'email')
-    search_fields = ('username', 'email', 'first_name', 'last_name')
+    list_display_links = ('id', 'email')
+    search_fields = ('email', 'first_name', 'last_name')
     list_filter = (
         'role',
         'is_active',
@@ -44,7 +43,7 @@ class UserAdmin(ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('username', 'email', 'first_name', 'last_name', 'role')
+            'fields': ('email', 'first_name', 'last_name', 'role')
         }),
         ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
@@ -62,7 +61,7 @@ class UserAdmin(ModelAdmin):
     
     @display(description="Display Name", label=True)
     def display_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip() or obj.username
+        return f"{obj.first_name} {obj.last_name}".strip() or obj.email
     
     @display(description="Role", label=True)
     def role_badge(self, obj):
@@ -98,7 +97,7 @@ class UserAdmin(ModelAdmin):
 @admin.register(UserProfile)
 class UserProfileAdmin(ModelAdmin):
     list_display = ('user', 'phone_number', 'date_of_birth', 'has_profile_picture')
-    search_fields = ('user__username', 'user__email', 'phone_number')
+    search_fields = ('user__email', 'phone_number')
     list_filter = (
         'date_of_birth',
     )

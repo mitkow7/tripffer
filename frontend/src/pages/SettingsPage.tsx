@@ -2,16 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import {
   User,
-  Mail,
   Lock,
-  Bell,
-  Globe,
   Shield,
   Trash2,
   Save,
   Eye,
   EyeOff,
   Check,
+  AlertTriangle,
 } from "lucide-react";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
@@ -22,6 +20,7 @@ import {
   useUpdateProfile,
   useMyHotel,
   useUpdateHotel,
+  useDeleteAccount,
 } from "../hooks/useApi";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import UserProfileSettings from "../components/UserProfileSettings";
@@ -55,22 +54,6 @@ interface SecurityFormData {
   confirmPassword: string;
 }
 
-interface NotificationSettings {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  marketingEmails: boolean;
-  bookingUpdates: boolean;
-  priceAlerts: boolean;
-  newsletter: boolean;
-}
-
-interface PreferenceSettings {
-  currency: string;
-  language: string;
-  timezone: string;
-  theme: string;
-}
-
 const SettingsPage: React.FC = () => {
   const { data: user, isLoading, error, refetch } = useCurrentUser() as any;
   const {
@@ -81,7 +64,7 @@ const SettingsPage: React.FC = () => {
   const updateProfile = useUpdateProfile();
   const updateHotel = useUpdateHotel();
   const [activeTab, setActiveTab] = useState<
-    "profile" | "security" | "notifications" | "preferences" | "privacy"
+    "profile" | "security" | "privacy"
   >("profile");
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -156,66 +139,13 @@ const SettingsPage: React.FC = () => {
   }, [user, hotelData, methods]);
 
   const securityForm = useForm<SecurityFormData>();
-
-  const [notifications, setNotifications] = useState<NotificationSettings>({
-    emailNotifications: true,
-    pushNotifications: true,
-    marketingEmails: false,
-    bookingUpdates: true,
-    priceAlerts: true,
-    newsletter: false,
-  });
-
-  // Update notifications with user data when loaded
-  useEffect(() => {
-    if (user?.notification_preferences) {
-      setNotifications((prev) => ({
-        ...prev,
-        emailNotifications:
-          user.notification_preferences.email_notifications ??
-          prev.emailNotifications,
-        pushNotifications:
-          user.notification_preferences.push_notifications ??
-          prev.pushNotifications,
-        marketingEmails:
-          user.notification_preferences.marketing_emails ??
-          prev.marketingEmails,
-        bookingUpdates:
-          user.notification_preferences.booking_updates ?? prev.bookingUpdates,
-        priceAlerts:
-          user.notification_preferences.price_alerts ?? prev.priceAlerts,
-        newsletter: user.notification_preferences.newsletter ?? prev.newsletter,
-      }));
-    }
-  }, [user]);
-
-  const [preferences, setPreferences] = useState<PreferenceSettings>({
-    currency: "USD",
-    language: "en",
-    timezone: "America/New_York",
-    theme: "light",
-  });
-
-  // Update preferences with user data when loaded
-  useEffect(() => {
-    if (user?.preferences) {
-      setPreferences((prev) => ({
-        ...prev,
-        currency: user.preferences.currency || prev.currency,
-        language: user.preferences.language || prev.language,
-        timezone: user.preferences.timezone || prev.timezone,
-        theme: user.preferences.theme || prev.theme,
-      }));
-    }
-  }, [user]);
-
   const changePassword = useChangePassword();
+  const deleteAccount = useDeleteAccount();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const tabs = [
     { id: "profile", label: "Profile", icon: User },
     { id: "security", label: "Security", icon: Lock },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "preferences", label: "Preferences", icon: Globe },
     { id: "privacy", label: "Privacy", icon: Shield },
   ];
 
@@ -304,79 +234,11 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleNotificationChange = async (key: keyof NotificationSettings) => {
-    const newValue = !notifications[key];
-    setNotifications((prev) => ({
-      ...prev,
-      [key]: newValue,
-    }));
-
+  const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(
-        "http://localhost:8000/api/accounts/notifications/",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-          body: JSON.stringify({
-            [key]: newValue,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        // Revert the change if the update failed
-        setNotifications((prev) => ({
-          ...prev,
-          [key]: !newValue,
-        }));
-        throw new Error("Failed to update notification settings");
-      }
+      await deleteAccount.mutateAsync();
     } catch (error) {
-      // console.error("Failed to update notification settings:", error);
-    }
-  };
-
-  const handlePreferenceChange = async (
-    key: keyof PreferenceSettings,
-    value: string
-  ) => {
-    setPreferences((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-
-    try {
-      const response = await fetch(
-        "http://localhost:8000/api/accounts/preferences/",
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-          body: JSON.stringify({ [key]: value }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to update preferences");
-      }
-    } catch (error) {
-      // console.error("Failed to update preferences:", error);
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete your account? This action cannot be undone."
-      )
-    ) {
-      // console.log("Delete account requested");
-      // Replace with your actual API call
+      console.error('Failed to delete account:', error);
     }
   };
 
@@ -614,255 +476,60 @@ const SettingsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Notifications Tab */}
-            {activeTab === "notifications" && (
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Notification Preferences
-                </h2>
-
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      General Notifications
-                    </h3>
-                    <div className="space-y-4">
-                      {Object.entries({
-                        emailNotifications: "Email Notifications",
-                        pushNotifications: "Push Notifications",
-                        bookingUpdates: "Booking Updates",
-                        priceAlerts: "Price Alerts",
-                      }).map(([key, label]) => (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between"
-                        >
-                          <div>
-                            <label className="text-sm font-medium text-gray-900">
-                              {label}
-                            </label>
-                            <p className="text-sm text-gray-600">
-                              {key === "emailNotifications" &&
-                                "Receive notifications via email"}
-                              {key === "pushNotifications" &&
-                                "Receive push notifications on your device"}
-                              {key === "bookingUpdates" &&
-                                "Get updates about your bookings and trips"}
-                              {key === "priceAlerts" &&
-                                "Be notified when prices drop for saved trips"}
-                            </p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={
-                                notifications[key as keyof NotificationSettings]
-                              }
-                              onChange={() =>
-                                handleNotificationChange(
-                                  key as keyof NotificationSettings
-                                )
-                              }
-                              className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Marketing Communications
-                    </h3>
-                    <div className="space-y-4">
-                      {Object.entries({
-                        marketingEmails: "Marketing Emails",
-                        newsletter: "Newsletter",
-                      }).map(([key, label]) => (
-                        <div
-                          key={key}
-                          className="flex items-center justify-between"
-                        >
-                          <div>
-                            <label className="text-sm font-medium text-gray-900">
-                              {label}
-                            </label>
-                            <p className="text-sm text-gray-600">
-                              {key === "marketingEmails" &&
-                                "Receive promotional offers and deals"}
-                              {key === "newsletter" &&
-                                "Get our weekly travel newsletter"}
-                            </p>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={
-                                notifications[key as keyof NotificationSettings]
-                              }
-                              onChange={() =>
-                                handleNotificationChange(
-                                  key as keyof NotificationSettings
-                                )
-                              }
-                              className="sr-only peer"
-                            />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {/* Preferences Tab */}
-            {activeTab === "preferences" && (
-              <Card className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                  Preferences
-                </h2>
-
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Currency
-                      </label>
-                      <select
-                        value={preferences.currency}
-                        onChange={(e) =>
-                          handlePreferenceChange("currency", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="USD">USD - US Dollar</option>
-                        <option value="EUR">EUR - Euro</option>
-                        <option value="GBP">GBP - British Pound</option>
-                        <option value="CAD">CAD - Canadian Dollar</option>
-                        <option value="AUD">AUD - Australian Dollar</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Language
-                      </label>
-                      <select
-                        value={preferences.language}
-                        onChange={(e) =>
-                          handlePreferenceChange("language", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="en">English</option>
-                        <option value="es">Español</option>
-                        <option value="fr">Français</option>
-                        <option value="de">Deutsch</option>
-                        <option value="it">Italiano</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Timezone
-                      </label>
-                      <select
-                        value={preferences.timezone}
-                        onChange={(e) =>
-                          handlePreferenceChange("timezone", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="America/New_York">
-                          Eastern Time (ET)
-                        </option>
-                        <option value="America/Chicago">
-                          Central Time (CT)
-                        </option>
-                        <option value="America/Denver">
-                          Mountain Time (MT)
-                        </option>
-                        <option value="America/Los_Angeles">
-                          Pacific Time (PT)
-                        </option>
-                        <option value="Europe/London">London (GMT)</option>
-                        <option value="Europe/Paris">Paris (CET)</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Theme
-                      </label>
-                      <select
-                        value={preferences.theme}
-                        onChange={(e) =>
-                          handlePreferenceChange("theme", e.target.value)
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
-                        <option value="auto">Auto</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            )}
-
             {/* Privacy Tab */}
             {activeTab === "privacy" && (
               <div className="space-y-6">
-                <Card className="p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
-                    Privacy Settings
-                  </h2>
-
-                  <div className="space-y-6">
-                    <div className="border-t border-gray-200 pt-6">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                        Account Visibility
-                      </h3>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <label className="text-sm font-medium text-gray-900">
-                              Profile Visibility
-                            </label>
-                            <p className="text-sm text-gray-600">
-                              Control who can see your profile information
-                            </p>
-                          </div>
-                          <select className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option>Public</option>
-                            <option>Friends Only</option>
-                            <option>Private</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-
                 <Card className="p-6 border-red-200 bg-red-50">
-                  <h3 className="text-lg font-semibold text-red-900 mb-4">
-                    Danger Zone
-                  </h3>
-                  <p className="text-red-700 mb-4">
-                    Once you delete your account, there is no going back. Please
-                    be certain.
+                  <div className="flex items-center mb-4">
+                    <AlertTriangle className="w-6 h-6 text-red-600 mr-2" />
+                    <h3 className="text-lg font-semibold text-red-900">
+                      Delete Account
+                    </h3>
+                  </div>
+                  <p className="text-red-700 mb-6">
+                    This action cannot be undone. This will permanently delete
+                    your account and remove all associated data from our servers.
                   </p>
-                  <Button variant="destructive" onClick={handleDeleteAccount}>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Account
-                  </Button>
+                  {!showDeleteConfirm ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="w-full sm:w-auto"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Delete Account
+                    </Button>
+                  ) : (
+                    <div className="space-y-4">
+                      <p className="text-sm text-red-800 font-medium">
+                        Are you absolutely sure you want to delete your account?
+                      </p>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button
+                          variant="destructive"
+                          onClick={handleDeleteAccount}
+                          loading={deleteAccount.isPending}
+                          className="w-full sm:w-auto"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Yes, Delete My Account
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowDeleteConfirm(false)}
+                          className="w-full sm:w-auto"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                      {deleteAccount.isError && (
+                        <p className="text-sm text-red-600 mt-2">
+                          {deleteAccount.error?.message ||
+                            "Failed to delete account. Please try again."}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </Card>
               </div>
             )}

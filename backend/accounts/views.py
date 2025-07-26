@@ -9,6 +9,7 @@ from rest_framework.decorators import api_view, permission_classes
 from datetime import timedelta
 from accounts.models import UserProfile
 from hotels.models import Hotel, HotelImage
+from django.db import transaction
 
 
 class RegisterView(APIView):
@@ -124,4 +125,30 @@ def user_profile(request):
         # Return updated user data
         serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+
+
+class DeleteAccountView(APIView):
+    """
+    View to handle account deletion.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def delete(self, request):
+        user = request.user
+        
+        # Delete associated hotel if user is a hotel owner
+        if user.role == "HOTEL":
+            try:
+                hotel = Hotel.objects.get(user=user)
+                hotel.delete()
+            except Hotel.DoesNotExist:
+                pass
+
+        # Delete user profile and user
+        if hasattr(user, 'profile'):
+            user.profile.delete()
+        user.delete()
+
+        return Response({"detail": "Account successfully deleted"}, status=status.HTTP_200_OK)
 

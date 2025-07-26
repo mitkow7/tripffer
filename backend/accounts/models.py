@@ -87,5 +87,9 @@ class UserProfile(models.Model):
         null=True,
     )
 
+    @property
+    def full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}"
+
     def __str__(self):
-        return f"{self.user.username}'s Profile"
+        return f"{self.full_name}'s Profile"

@@ -367,6 +367,46 @@ class FavoriteHotelViewSet(viewsets.ModelViewSet):
         """
         return self.queryset.filter(user=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        """
+        Create a new favorite hotel entry.
+        """
+        # Get the hotel ID from the request data
+        hotel_id = request.data.get('hotel')
+        if not hotel_id:
+            return Response(
+                {"detail": "Hotel ID is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Get the hotel instance
+            hotel = Hotel.objects.get(id=hotel_id)
+        except Hotel.DoesNotExist:
+            return Response(
+                {"detail": "Hotel not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            # Create the favorite
+            favorite = FavoriteHotel.objects.create(
+                user=request.user,
+                hotel=hotel
+            )
+            serializer = self.get_serializer(favorite)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response(
+                {"detail": "This hotel is already in your favorites."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "Failed to add hotel to favorites."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     def perform_create(self, serializer):
         """
         Associate the favorite hotel with the logged-in user.
@@ -395,6 +435,8 @@ class ReviewViewSet(viewsets.ModelViewSet):
         If a review already exists, update it instead.
         """
         print("Received review data:", request.data)  # Debug print
+        
+        existing_review = None  # Initialize the variable
         
         # Check if review already exists
         try:

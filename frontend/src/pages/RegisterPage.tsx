@@ -85,11 +85,9 @@ const RegisterPage: React.FC = () => {
 
       const registrationData = {
         email: data.email,
-        username: data.email, // Use email as username
+        password: data.password,
         first_name: data.firstName,
         last_name: data.lastName,
-        password: data.password,
-        password_confirm: data.confirmPassword,
         role: data.role,
         ...(data.role === "HOTEL" && {
           hotel: {

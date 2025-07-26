@@ -45,13 +45,15 @@ export interface SearchFilters {
 export interface User {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  avatar?: string;
-  preferences: {
-    currency: string;
-    language: string;
-    notifications: boolean;
+  first_name: string;
+  last_name: string;
+  role: "USER" | "HOTEL";
+  is_active: boolean;
+  profile?: {
+    phone_number?: string;
+    date_of_birth?: string;
+    bio?: string;
+    profile_picture?: string;
   };
 }
 

@@ -29,13 +29,10 @@ interface Review {
 
 const ReviewCard: React.FC<{ review: Review }> = ({ review }) => {
   const getUserName = () => {
-    if (review.user.first_name || review.user.last_name) {
-      const firstName = review.user.first_name || "";
-      const lastName = review.user.last_name || "";
-      return `${firstName} ${lastName}`.trim();
+    if (review.user.first_name && review.user.last_name) {
+        return `${review.user.first_name} ${review.user.last_name}`;
     }
-    // If no name is available, show first part of email
-    return review.user.email.split("@")[0];
+    return review.user.email;
   };
 
   const formatDate = (dateString: string) => {

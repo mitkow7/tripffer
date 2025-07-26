@@ -2,6 +2,7 @@ import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../config/api";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 interface UserProfile {
   id: number;
@@ -271,7 +272,7 @@ export function useToggleFavorite() {
     mutationFn: async (hotelId: string) => {
       try {
         const response = await api.post("/hotels/favorites/", {
-          hotel_id: hotelId,
+          hotel: hotelId,
         });
         return response.data;
       } catch (error: any) {
@@ -528,6 +529,40 @@ export function useUpdateHotel() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["myHotel"] });
+    },
+  });
+}
+
+export function useDeleteAccount() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await fetch('http://localhost:8000/api/accounts/delete/', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete account');
+      }
+
+      // Clear all auth tokens
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
+      // Clear all queries
+      queryClient.clear();
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      // Redirect to home page after successful deletion
+      navigate('/');
     },
   });
 }

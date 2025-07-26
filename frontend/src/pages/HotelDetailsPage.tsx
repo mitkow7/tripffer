@@ -46,13 +46,14 @@ const HotelDetailsPage = () => {
   const { hotelId } = useParams<{ hotelId: string }>();
   const { data: hotel, isLoading, error } = useHotelDetails(hotelId || "");
   const [showAllPhotos, setShowAllPhotos] = useState(false);
-  const { data: favoritesData } = useFavorites();
+  const { data: favoritesData, isLoading: favoritesLoading } = useFavorites();
   const [isSaving, setIsSaving] = useState(false);
   const toggleFavorite = useToggleFavorite();
 
-  const favorites = favoritesData || [];
-  const isFavorited = favorites.some((fav: any) => fav.hotel.id === hotelId);
-  const favoriteId = favorites.find((fav: any) => fav.hotel.id === hotelId)?.id;
+  // Find the favorite entry for this hotel
+  const favoriteEntry = favoritesData?.find((fav: any) => fav.hotel.id === Number(hotelId));
+  const isFavorited = !!favoriteEntry;
+  const favoriteId = favoriteEntry?.id;
 
   const handleSave = async () => {
     if (!hotelId || isSaving) return;
@@ -115,7 +116,7 @@ const HotelDetailsPage = () => {
             <div className="flex flex-wrap items-center gap-4 text-white/90">
               <div className="flex items-center">
                 <StarRating rating={hotel.stars} />
-                <span className="ml-2">{hotel.stars}.0</span>
+                <span className="ml-2">{hotel.stars.toFixed(1)}</span>
               </div>
               <div className="flex items-center">
                 <MapPin className="w-4 h-4 mr-2" />
@@ -123,7 +124,7 @@ const HotelDetailsPage = () => {
               </div>
               {hotel.guest_score && (
                 <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  {hotel.guest_score} Guest rating
+                  {hotel.guest_score.toFixed(2)} Guest rating
                 </div>
               )}
             </div>
@@ -344,7 +345,7 @@ const HotelDetailsPage = () => {
                     ? "bg-red-50 text-red-600 hover:bg-red-100"
                     : "bg-white text-gray-700 hover:bg-gray-100"
                 } shadow-lg relative group disabled:opacity-50 disabled:cursor-not-allowed`}
-                disabled={isSaving}
+                disabled={isSaving || favoritesLoading}
               >
                 {isSaving ? (
                   <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -358,7 +359,13 @@ const HotelDetailsPage = () => {
                   />
                 )}
                 <span className={isFavorited ? "text-red-500" : ""}>
-                  {isSaving ? "Saving..." : isFavorited ? "Saved" : "Save"}
+                  {isSaving 
+                    ? "Saving..." 
+                    : favoritesLoading 
+                    ? "Loading..." 
+                    : isFavorited 
+                    ? "Saved" 
+                    : "Save"}
                 </span>
               </button>
 

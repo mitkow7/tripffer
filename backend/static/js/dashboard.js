@@ -343,8 +343,8 @@ additionalStyles.textContent = `
   .quick-action-btn {
     will-change: transform;
     position: relative;
-    overflow: hidden;
-  }
+        overflow: hidden;
+    }
 `;
 
 document.head.appendChild(additionalStyles); 

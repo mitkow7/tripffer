@@ -98,7 +98,7 @@
                     <span class="text-sm font-medium text-gray-600">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
                 </div>
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-sm font-medium text-gray-900">{{ user.first_name }} {{ user.last_name }}</p>
                     <p class="text-xs text-gray-500">{{ user.email }}</p>
                 </div>
                 <span class="status-badge px-2 py-1 text-xs rounded-full {% if user.role == 'HOTEL' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
@@ -124,7 +124,7 @@
                 </div>
                 <div class="flex-1">
                     <p class="text-sm font-medium text-gray-900">{{ booking.room.hotel.name }}</p>
-                    <p class="text-xs text-gray-500">{{ booking.user.get_full_name|default:booking.user.username }}</p>
+                    <p class="text-xs text-gray-500">{{ booking.user.first_name }} {{ booking.user.last_name }}</p>
                 </div>
                 <span class="status-badge px-2 py-1 text-xs rounded-full {% if booking.status == 'confirmed' %}bg-green-100 text-green-800{% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800{% elif booking.status == 'cancelled' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
                     {{ booking.get_status_display }}
