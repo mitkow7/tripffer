@@ -6,23 +6,16 @@ from rest_framework.response import Response
 def getRoutes(request):
     routes = [
         {
-            'endpoint': '/api/',
-            'method': 'GET',
-            'description': 'Returns available API routes',
+            'endpoint': '/api/accounts/',
+            'method': 'GET/POST',
+            'description': 'User management endpoints',
             'body': None
         },
         {
-            'endpoint': '/api/hello/',
-            'method': 'GET',
-            'description': 'Returns a hello message',
+            'endpoint': '/api/hotels/',
+            'method': 'GET/POST',
+            'description': 'Hotel management endpoints',
             'body': None
         },
     ]
     return Response(routes)
-
-@api_view(['GET'])
-def hello_world(request):
-    return Response({
-        'message': 'How are you doing?',
-        'status': 'success'
-    })

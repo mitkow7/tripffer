@@ -42,8 +42,12 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
         # Start with all hotels
         queryset = Hotel.objects.all()
 
-        # Only apply filters if search parameters are provided
-        if any([city, beds_str, adults_str, check_in_str, check_out_str]):
+        # Filter by city first (if provided)
+        if city:
+            queryset = queryset.filter(address__icontains=city)
+
+        # Only apply room-based filters if room search parameters are provided
+        if any([beds_str, adults_str, check_in_str, check_out_str]):
             # Start with a base queryset of all rooms
             eligible_rooms = Room.objects.all()
 
@@ -76,11 +80,7 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
             # Get the IDs of hotels that have at least one eligible room
             hotel_ids_with_available_rooms = eligible_rooms.values_list('hotel_id', flat=True).distinct()
 
-            # Filter by city
-            if city:
-                queryset = queryset.filter(address__icontains=city)
-
-            # Final filtering: only include hotels that have available rooms matching the criteria
+            # Filter to only include hotels that have available rooms matching the criteria
             queryset = queryset.filter(id__in=hotel_ids_with_available_rooms)
 
         return queryset.distinct()
@@ -104,6 +104,41 @@ class MyHotelView(viewsets.ViewSet):
                 {"error": "No hotel found for this user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        except Exception as e:
+            return Response(
+                {"error": f"An unexpected error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=['put'])
+    def update_hotel(self, request):
+        """
+        Update the hotel associated with the current user.
+        """
+        try:
+            if not hasattr(request.user, 'hotel'):
+                return Response(
+                    {"error": "No hotel found for this user."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            hotel = request.user.hotel
+            serializer = HotelSerializer(hotel, data=request.data, partial=True, context={'request': request})
+            
+            if serializer.is_valid():
+                serializer.save()
+                
+                # Handle image uploads
+                images_data = request.FILES.getlist('images')
+                if images_data:
+                    from .models import HotelImage
+                    for image_data in images_data:
+                        HotelImage.objects.create(hotel=hotel, image=image_data)
+                
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                
         except Exception as e:
             return Response(
                 {"error": f"An unexpected error occurred: {str(e)}"},
@@ -154,6 +189,12 @@ class BookingViewSet(viewsets.ModelViewSet):
         return Booking.objects.none()
 
     def perform_create(self, serializer):
+        # Prevent hotel users from creating bookings
+        if hasattr(self.request.user, 'hotel'):
+            raise serializers.ValidationError({
+                "detail": "Hotel owners cannot create bookings. Only guests can book rooms."
+            })
+            
         room = serializer.validated_data['room']
         start_date = serializer.validated_data['start_date']
         end_date = serializer.validated_data['end_date']

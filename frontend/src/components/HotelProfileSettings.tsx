@@ -35,28 +35,29 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
 
       <Input
         label="Hotel Name"
-        {...register("hotelName", { required: "Hotel name is required" })}
-        error={errors.hotelName?.message as string}
+        {...register("hotel_name", { required: "Hotel name is required" })}
+        error={errors.hotel_name?.message as string}
       />
 
       <Input
         label="Address"
-        {...register("address", { required: "Address is required" })}
-        error={errors.address?.message as string}
+        {...register("hotel_address", { required: "Address is required" })}
+        error={errors.hotel_address?.message as string}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input
           label="Contact Email"
           type="email"
-          {...register("contactEmail")}
-          error={errors.contactEmail?.message as string}
+          readOnly
+          {...register("hotel_contact_email")}
+          error={errors.hotel_contact_email?.message as string}
         />
         <Input
           label="Contact Phone"
           type="tel"
-          {...register("contactPhone")}
-          error={errors.contactPhone?.message as string}
+          {...register("hotel_contact_phone")}
+          error={errors.hotel_contact_phone?.message as string}
         />
       </div>
 
@@ -64,15 +65,25 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
         <Input
           label="Website"
           type="url"
-          {...register("website")}
-          error={errors.website?.message as string}
+          {...register("hotel_website")}
+          error={errors.hotel_website?.message as string}
         />
         <Input
           label="Price per night"
           type="number"
           step="0.01"
-          {...register("pricePerNight")}
-          error={errors.pricePerNight?.message as string}
+          {...register("hotel_price_per_night")}
+          error={errors.hotel_price_per_night?.message as string}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+        <Input
+          label="Guest Score"
+          type="number"
+          readOnly
+          {...register("hotel_guest_score")}
+          error={errors.hotel_guest_score?.message as string}
         />
       </div>
 
@@ -80,12 +91,12 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
         <Input
           label="Availability Start Date"
           type="date"
-          {...register("availabilityStartDate")}
+          {...register("hotel_availability_start_date")}
         />
         <Input
           label="Availability End Date"
           type="date"
-          {...register("availabilityEndDate")}
+          {...register("hotel_availability_end_date")}
         />
       </div>
 
@@ -94,7 +105,7 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
           Description
         </label>
         <textarea
-          {...register("description")}
+          {...register("hotel_description")}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Tell us about your hotel..."
@@ -106,7 +117,7 @@ const HotelProfileSettings: React.FC<HotelProfileSettingsProps> = ({
           Features
         </label>
         <textarea
-          {...register("features")}
+          {...register("hotel_features")}
           rows={2}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="e.g., Free WiFi, Pool, Gym"

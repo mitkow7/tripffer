@@ -175,7 +175,7 @@ export function useMyHotel() {
         throw error;
       }
     },
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled: !!localStorage.getItem("accessToken"),
     retry: 1,
   });
 }
@@ -417,7 +417,7 @@ export function useHotelBookings() {
       const response = await api.get("/hotels/my-hotel/bookings/");
       return response.data;
     },
-    enabled: !!localStorage.getItem("auth_token"),
+    enabled: !!localStorage.getItem("accessToken"),
   });
 }
 
@@ -477,6 +477,57 @@ export function useUpdateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user"] });
+    },
+  });
+}
+
+export function useUpdateHotel() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: any) => {
+      try {
+        const formData = new FormData();
+        
+        // Add hotel fields to FormData
+        formData.append('name', data.hotel_name || '');
+        formData.append('address', data.hotel_address || '');
+        formData.append('website', data.hotel_website || '');
+        formData.append('contact_email', data.hotel_contact_email || '');
+        formData.append('contact_phone', data.hotel_contact_phone || '');
+        formData.append('price_per_night', data.hotel_price_per_night || '');
+        formData.append('availability_start_date', data.hotel_availability_start_date || '');
+        formData.append('availability_end_date', data.hotel_availability_end_date || '');
+        formData.append('features', data.hotel_features || '');
+        formData.append('description', data.hotel_description || '');
+
+        // Add images if they exist
+        if (data.hotel_images && data.hotel_images.length > 0) {
+          data.hotel_images.forEach((image: File, index: number) => {
+            formData.append('images', image);
+          });
+        }
+
+        const response = await api.put(
+          "/hotels/my-hotel/update_hotel/",
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data;
+      } catch (error: any) {
+        throw new Error(
+          error.response?.data?.detail ||
+            error.response?.data?.error ||
+            "Failed to update hotel"
+        );
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["myHotel"] });
     },
   });
 }

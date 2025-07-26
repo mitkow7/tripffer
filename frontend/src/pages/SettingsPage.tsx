@@ -20,6 +20,8 @@ import {
   useCurrentUser,
   useChangePassword,
   useUpdateProfile,
+  useMyHotel,
+  useUpdateHotel,
 } from "../hooks/useApi";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import UserProfileSettings from "../components/UserProfileSettings";
@@ -44,6 +46,7 @@ interface FormData {
   hotel_availability_end_date?: string;
   hotel_features?: string;
   hotel_description?: string;
+  hotel_guest_score?: number;
 }
 
 interface SecurityFormData {
@@ -70,7 +73,13 @@ interface PreferenceSettings {
 
 const SettingsPage: React.FC = () => {
   const { data: user, isLoading, error, refetch } = useCurrentUser() as any;
+  const {
+    data: hotelData,
+    isLoading: hotelLoading,
+    error: hotelError,
+  } = useMyHotel();
   const updateProfile = useUpdateProfile();
+  const updateHotel = useUpdateHotel();
   const [activeTab, setActiveTab] = useState<
     "profile" | "security" | "notifications" | "preferences" | "privacy"
   >("profile");
@@ -104,27 +113,33 @@ const SettingsPage: React.FC = () => {
       hotel_availability_end_date: "",
       hotel_features: "",
       hotel_description: "",
+      hotel_guest_score: 0,
     },
   });
 
   // Update form with user data when it's loaded
   useEffect(() => {
     if (user) {
-      if (user.role === "HOTEL") {
+      if (user.role === "HOTEL" && hotelData) {
         methods.reset({
-          hotel_name: user.hotel?.name || "",
-          hotel_address: user.hotel?.address || "",
-          hotel_website: user.hotel?.website || "",
-          hotel_contact_email: user.hotel?.contact_email || "",
-          hotel_contact_phone: user.hotel?.contact_phone || "",
-          hotel_price_per_night: user.hotel?.price_per_night || 0,
+          hotel_name: hotelData.name || "",
+          hotel_address: hotelData.address || "",
+          hotel_website: hotelData.website || "",
+          hotel_contact_email: user.email || "",
+          hotel_contact_phone: hotelData.contact_phone || "",
+          hotel_price_per_night: hotelData.price_per_night || 0,
           hotel_availability_start_date:
-            user.hotel?.availability_start_date || "",
-          hotel_availability_end_date: user.hotel?.availability_end_date || "",
-          hotel_features: user.hotel?.features || "",
-          hotel_description: user.hotel?.description || "",
+            hotelData.availability_start_date || "",
+          hotel_availability_end_date: hotelData.availability_end_date || "",
+          hotel_features: Array.isArray(hotelData.features)
+            ? hotelData.features.join(", ")
+            : hotelData.features || "",
+          hotel_description: hotelData.description || "",
+          hotel_guest_score: hotelData.guest_score
+            ? Math.round(hotelData.guest_score * 10) / 10
+            : 0,
         });
-      } else {
+      } else if (user.role !== "HOTEL") {
         methods.reset({
           first_name: user.first_name || "",
           last_name: user.last_name || "",
@@ -138,7 +153,7 @@ const SettingsPage: React.FC = () => {
       setTempProfileImages([]);
       setTempProfilePictureUrl(undefined);
     }
-  }, [user, methods]);
+  }, [user, hotelData, methods]);
 
   const securityForm = useForm<SecurityFormData>();
 
@@ -213,40 +228,31 @@ const SettingsPage: React.FC = () => {
   const handleProfileSubmit = async (data: FormData) => {
     setSaveStatus("saving");
     try {
-      // Create FormData object to handle file upload
-      const formData: any = {
-        ...(user.role === "HOTEL"
-          ? {
-              "hotel.name": data.hotel_name,
-              "hotel.address": data.hotel_address,
-              "hotel.website": data.hotel_website,
-              "hotel.contact_email": data.hotel_contact_email,
-              "hotel.contact_phone": data.hotel_contact_phone,
-              "hotel.price_per_night": data.hotel_price_per_night,
-              "hotel.availability_start_date":
-                data.hotel_availability_start_date,
-              "hotel.availability_end_date": data.hotel_availability_end_date,
-              "hotel.features": data.hotel_features,
-              "hotel.description": data.hotel_description,
-            }
-          : {
-              first_name: data.first_name,
-              last_name: data.last_name,
-              email: data.email,
-              "profile.phone_number": data.phone_number,
-              "profile.date_of_birth": data.date_of_birth,
-              "profile.bio": data.bio,
-            }),
-      };
+      if (user.role === "HOTEL") {
+        // Update hotel data using hotel-specific endpoint
+        const hotelData = {
+          ...data,
+          hotel_images: tempProfileImages // Include selected images
+        };
+        await updateHotel.mutateAsync(hotelData);
+      } else {
+        // Update user profile data
+        const formData: any = {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          phone_number: data.phone_number,
+          date_of_birth: data.date_of_birth,
+          bio: data.bio,
+        };
 
-      // Add profile picture if one was selected
-      if (user.role === "HOTEL" && tempProfileImages.length > 0) {
-        formData.images = tempProfileImages;
-      } else if (tempProfileImages.length > 0) {
-        formData.profile_picture = tempProfileImages[0];
+        // Add profile picture if one was selected
+        if (tempProfileImages.length > 0) {
+          formData.profile_picture = tempProfileImages[0];
+        }
+
+        await updateProfile.mutateAsync(formData);
       }
-
-      await updateProfile.mutateAsync(formData);
 
       // Clear temporary profile picture data
       if (tempProfilePictureUrl) {
@@ -374,7 +380,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || (user?.role === "HOTEL" && hotelLoading)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -382,13 +388,15 @@ const SettingsPage: React.FC = () => {
     );
   }
 
-  if (error) {
+  if (error || (user?.role === "HOTEL" && hotelError)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600">
-            Failed to load user data. Please try again later.
+            {error
+              ? "Failed to load user data. Please try again later."
+              : "Failed to load hotel data. Please try again later."}
           </p>
         </div>
       </div>
@@ -454,10 +462,19 @@ const SettingsPage: React.FC = () => {
                     className="space-y-6"
                   >
                     {user.role === "HOTEL" ? (
-                      <HotelProfileSettings
-                        user={user}
-                        onImageChange={handleImageChange}
-                      />
+                      hotelData ? (
+                        <HotelProfileSettings
+                          user={user}
+                          onImageChange={handleImageChange}
+                        />
+                      ) : (
+                        <div className="text-center py-8">
+                          <p className="text-gray-600">
+                            No hotel profile found. Please create your hotel
+                            profile first.
+                          </p>
+                        </div>
+                      )
                     ) : (
                       <UserProfileSettings
                         user={user}

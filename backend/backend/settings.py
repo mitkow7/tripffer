@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 from pathlib import Path
 from decouple import config
 from datetime import timedelta
+from django.templatetags.static import static
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -99,7 +101,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -175,6 +177,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
+    BASE_DIR / 'static',
     BASE_DIR / 'staticfiles',
 ]
 
@@ -207,3 +210,94 @@ AUTH_USER_MODEL = 'accounts.AppUser'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django Unfold Configuration
+UNFOLD = {
+    "SITE_TITLE": "Tripffer Admin",
+    "SITE_HEADER": "Tripffer Administration",
+    "SITE_URL": "/",
+    "SITE_SYMBOL": "🏨",  # symbol for when icon is not available
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    "ENVIRONMENT": "tripffer.local",
+    "DASHBOARD_CALLBACK": "backend.admin.dashboard_callback",
+    "COLORS": {
+        "primary": {
+            "50": "239 246 255",
+            "100": "219 234 254", 
+            "200": "191 219 254",
+            "300": "147 197 253",
+            "400": "96 165 250",
+            "500": "59 130 246",
+            "600": "37 99 235",
+            "700": "29 78 216",
+            "800": "30 64 175",
+            "900": "30 58 138",
+            "950": "23 37 84"
+        },
+    },
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Navigation",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Dashboard",
+                        "icon": "home",
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            {
+                "title": "User Management",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Users",
+                        "icon": "person",
+                        "link": reverse_lazy("admin:accounts_appuser_changelist"),
+                        "badge": "backend.admin.user_count",
+                    },
+                    {
+                        "title": "User Profiles",
+                        "icon": "badge",
+                        "link": reverse_lazy("admin:accounts_userprofile_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Hotel Management",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Hotels",
+                        "icon": "business",
+                        "link": reverse_lazy("admin:hotels_hotel_changelist"),
+                        "badge": "backend.admin.hotel_count",
+                    },
+                    {
+                        "title": "Rooms",
+                        "icon": "bed",
+                        "link": reverse_lazy("admin:hotels_room_changelist"),
+                    },
+                    {
+                        "title": "Bookings",
+                        "icon": "calendar_month", 
+                        "link": reverse_lazy("admin:hotels_booking_changelist"),
+                        "badge": "backend.admin.pending_bookings_count",
+                    },
+                    {
+                        "title": "Reviews",
+                        "icon": "star",
+                        "link": reverse_lazy("admin:hotels_review_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+}

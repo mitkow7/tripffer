@@ -1,0 +1,171 @@
+{% load i18n %}
+
+<!-- Quick Stats Widgets -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Users Widget -->
+    <div class="dashboard-card bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">{% trans "Total Users" %}</h3>
+                <p class="text-3xl font-bold text-blue-600">{{ dashboard_stats.users.total }}</p>
+                <p class="text-sm text-gray-500">+{{ dashboard_stats.users.new_this_month }} {% trans "this month" %}</p>
+            </div>
+            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotels Widget -->
+    <div class="dashboard-card bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">{% trans "Active Hotels" %}</h3>
+                <p class="text-3xl font-bold text-green-600">{{ dashboard_stats.hotels.active }}</p>
+                <p class="text-sm text-gray-500">{{ dashboard_stats.hotels.total }} {% trans "total" %}</p>
+            </div>
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bookings Widget -->
+    <div class="dashboard-card bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">{% trans "Pending Bookings" %}</h3>
+                <p class="text-3xl font-bold text-yellow-600">{{ dashboard_stats.bookings.pending }}</p>
+                <p class="text-sm text-gray-500">{{ dashboard_stats.bookings.this_month }} {% trans "this month" %}</p>
+            </div>
+            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Widget -->
+    <div class="dashboard-card bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700">{% trans "Avg Rating" %}</h3>
+                <p class="text-3xl font-bold text-purple-600">{{ dashboard_stats.reviews.avg_rating|floatformat:1 }}/5</p>
+                <p class="text-sm text-gray-500">{{ dashboard_stats.reviews.total }} {% trans "reviews" %}</p>
+            </div>
+            <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                </svg>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">{% trans "Quick Actions" %}</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <button class="quick-action-btn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" data-action="add-user">
+            {% trans "Add User" %}
+        </button>
+        <button class="quick-action-btn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" data-action="add-hotel">
+            {% trans "Add Hotel" %}
+        </button>
+        <button class="quick-action-btn bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" data-action="view-bookings">
+            {% trans "View Bookings" %}
+        </button>
+        <button class="quick-action-btn bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors duration-200" data-action="generate-report">
+            {% trans "Generate Report" %}
+        </button>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Recent Users -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">{% trans "Recent Users" %}</h3>
+        <div class="space-y-3">
+            {% for user in recent_activity.users %}
+            <div class="activity-item flex items-center space-x-3 p-3 rounded-lg transition-all duration-200" data-searchable>
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <span class="text-sm font-medium text-gray-600">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                    <p class="text-xs text-gray-500">{{ user.email }}</p>
+                </div>
+                <span class="status-badge px-2 py-1 text-xs rounded-full {% if user.role == 'HOTEL' %}bg-green-100 text-green-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ user.get_role_display }}
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">{% trans "No recent users" %}</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-lg font-semibold text-gray-700 mb-4">{% trans "Recent Bookings" %}</h3>
+        <div class="space-y-3">
+            {% for booking in recent_activity.bookings %}
+            <div class="activity-item flex items-center space-x-3 p-3 rounded-lg transition-all duration-200" data-searchable>
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-900">{{ booking.room.hotel.name }}</p>
+                    <p class="text-xs text-gray-500">{{ booking.user.get_full_name|default:booking.user.username }}</p>
+                </div>
+                <span class="status-badge px-2 py-1 text-xs rounded-full {% if booking.status == 'confirmed' %}bg-green-100 text-green-800{% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800{% elif booking.status == 'cancelled' %}bg-red-100 text-red-800{% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {{ booking.get_status_display }}
+                </span>
+            </div>
+            {% empty %}
+            <p class="text-gray-500 text-center py-4">{% trans "No recent bookings" %}</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Top Hotels -->
+<div class="bg-white rounded-lg shadow-md p-6 mt-6">
+    <h3 class="text-lg font-semibold text-gray-700 mb-4">{% trans "Top Performing Hotels" %}</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for hotel in top_hotels %}
+        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow duration-200" data-searchable>
+            <h4 class="font-medium text-gray-900">{{ hotel.name }}</h4>
+            <p class="text-sm text-gray-500 mb-2">{{ hotel.address|truncatechars:30 }}</p>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    {% for i in "12345"|make_list %}
+                        {% if forloop.counter <= hotel.stars %}
+                            <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                            </svg>
+                        {% else %}
+                            <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                            </svg>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% if hotel.guest_score %}
+                <span class="text-sm font-medium text-blue-600">{{ hotel.guest_score|floatformat:1 }}/10</span>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-4 col-span-full">{% trans "No hotels available" %}</p>
+        {% endfor %}
+    </div>
+</div> 

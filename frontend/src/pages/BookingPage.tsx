@@ -1,14 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../config/api";
+import { useCurrentUser } from "../hooks/useApi";
 
 const BookingPage = () => {
   const { hotelId, roomId } = useParams<{ hotelId: string; roomId: string }>();
   const navigate = useNavigate();
+  const { data: user } = useCurrentUser();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Redirect hotel users away from booking page
+  useEffect(() => {
+    if (user?.role === 'HOTEL') {
+      navigate('/hotel-dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // Don't render the booking form for hotel users
+  if (user?.role === 'HOTEL') {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

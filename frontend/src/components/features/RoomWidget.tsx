@@ -1,5 +1,6 @@
 import { BedDouble, Users, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useCurrentUser } from "../../hooks/useApi";
 
 interface Room {
   id: string;
@@ -16,6 +17,9 @@ interface RoomWidgetProps {
 }
 
 const RoomWidget = ({ rooms, hotelId }: RoomWidgetProps) => {
+  const { data: user } = useCurrentUser();
+  const isHotelUser = user?.role === 'HOTEL';
+
   if (!rooms || rooms.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6">
@@ -54,12 +58,18 @@ const RoomWidget = ({ rooms, hotelId }: RoomWidgetProps) => {
                 </span>
                 <span className="text-gray-600 text-sm ml-1">/night</span>
               </div>
-              <Link
-                to={`/hotel/${hotelId}/room/${room.id}/book`}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors"
-              >
-                Book Now
-              </Link>
+              {isHotelUser ? (
+                <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm cursor-not-allowed">
+                  Hotels Cannot Book
+                </span>
+              ) : (
+                <Link
+                  to={`/hotel/${hotelId}/room/${room.id}/book`}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                >
+                  Book Now
+                </Link>
+              )}
             </div>
           </div>
         ))}

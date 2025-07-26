@@ -140,8 +140,8 @@ For production deployment, ensure these environment variables are set:
 ### Atomic Design Structure
 
 - **Atoms**: Basic UI components (Button, Input, Card)
-- **Molecules**: Simple component combinations (SearchForm, TripCard)
-- **Organisms**: Complex components (Header, TripGrid)
+- **Molecules**: Simple component combinations (SearchForm, BookingWidget)
+- **Organisms**: Complex components (Header, HotelSearch)
 - **Templates**: Page layouts
 - **Pages**: Full page components
 
@@ -156,8 +156,8 @@ For production deployment, ensure these environment variables are set:
 
 #### Feature Components (`src/components/features/`)
 - `SearchForm`: Advanced search form with filters
-- `TripCard`: Trip display card with booking actions
-- `TripGrid`: Grid layout for trip listings
+- `BookingWidget`: Booking interface with room selection
+- `HotelSearch`: Hotel search and filtering functionality
 
 #### Layout Components (`src/components/layout/`)
 - `Header`: Navigation header with user menu

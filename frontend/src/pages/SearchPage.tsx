@@ -24,13 +24,16 @@ const SearchPage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
 
   const fetchHotels = async (params = {}) => {
+    console.log("🔍 fetchHotels called with params:", params);
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await api.get("hotels/search/", { params });
+      console.log("✅ API response:", response.data);
       setHotels(response.data);
     } catch (err: any) {
+      console.error("❌ API error:", err);
       setError(
         err.response?.data?.error || "Failed to fetch hotels. Please try again."
       );
@@ -67,6 +70,7 @@ const SearchPage: React.FC = () => {
         adults,
         beds,
       };
+      console.log("🚀 About to search with params:", apiParams);
       fetchHotels(apiParams);
     }
   }, [location.search]);

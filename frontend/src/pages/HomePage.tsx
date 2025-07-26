@@ -121,7 +121,7 @@ const HomePage: React.FC = () => {
                     <h3 className="text-xl font-bold mb-2">{hotel.name}</h3>
                     <p className="text-gray-600 mb-4">{hotel.address}</p>
                     <Link
-                      to={`/hotel/search/${hotel.id}`}
+                      to={`/hotel/${hotel.id}`}
                       className="text-blue-600 font-semibold inline-flex items-center"
                     >
                       Learn More <ArrowRight className="ml-2 w-4 h-4" />
@@ -262,7 +262,7 @@ const HomePage: React.FC = () => {
           </p>
           <div className="flex justify-center space-x-4">
             <Link to="/search">
-              <Button size="lg" variant="secondary">
+              <Button size="lg" variant="default">
                 Start Exploring
               </Button>
             </Link>
