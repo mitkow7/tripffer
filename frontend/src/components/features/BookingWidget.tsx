@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import StarRating from "../ui/StarRating";
 import { useCurrentUser } from "../../hooks/useApi";
+import { useNavigate } from "react-router-dom";
 
 interface BookingWidgetProps {
   pricePerNight: string;
@@ -17,6 +18,7 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
   const [guests, setGuests] = useState(1);
   const { data: user } = useCurrentUser();
   const isHotelUser = user?.role === 'HOTEL';
+  const navigate = useNavigate();
 
   return (
     <div className="bg-white rounded-lg shadow-xl p-6 border">
@@ -88,13 +90,22 @@ const BookingWidget: React.FC<BookingWidgetProps> = ({
 
       <button 
         className={`w-full mt-4 font-bold py-3 rounded-lg transition-all duration-300 ${
-          isHotelUser 
-            ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
-            : 'bg-blue-600 text-white hover:bg-blue-700 transform hover:scale-105'
+          !user ? 'bg-blue-600 text-white hover:bg-blue-700 transform hover:scale-105' :
+          isHotelUser ? 'bg-gray-300 text-gray-600 cursor-not-allowed' : 
+          'bg-blue-600 text-white hover:bg-blue-700 transform hover:scale-105'
         }`}
         disabled={isHotelUser}
+        onClick={() => {
+          if (!user) {
+            navigate('/login', { 
+              state: { from: window.location.pathname } 
+            });
+          }
+        }}
       >
-        {isHotelUser ? 'Hotels Cannot Reserve' : 'Reserve'}
+        {!user ? 'Login to Reserve' : 
+         isHotelUser ? 'Hotels Cannot Reserve' : 
+         'Reserve'}
       </button>
       <p className="text-center text-sm text-gray-500 mt-3">
         {isHotelUser ? 'Only guests can make reservations' : 'You won\'t be charged yet'}

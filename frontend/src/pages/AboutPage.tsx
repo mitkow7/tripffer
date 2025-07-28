@@ -143,16 +143,16 @@ const AboutPage: React.FC = () => {
             <div className="prose prose-lg mx-auto text-gray-600">
               <p className="mb-6">
                 Tripffer was born from a simple frustration: planning a trip shouldn't be overwhelming. 
-                Our founders, Sarah and Marcus, spent countless hours jumping between dozens of websites 
-                trying to find the perfect vacation for their families.
+                Our founder, Martin Mitkov, spent countless hours jumping between dozens of websites 
+                trying to find the perfect vacation for his family.
               </p>
               <p className="mb-6">
-                They realized that while the internet had made information more accessible, it had also 
+                He realized that while the internet had made information more accessible, it had also 
                 made travel planning more complex. There had to be a better way to discover, compare, 
                 and book travel experiences.
               </p>
               <p className="mb-8">
-                In 2016, they launched Tripffer with a vision to create the world's most comprehensive 
+                In 2016, he launched Tripffer with a vision to create the world's most comprehensive 
                 travel comparison platform. Today, we're proud to help thousands of travelers every day 
                 find their perfect trip, save money, and create unforgettable memories.
               </p>
@@ -188,18 +188,18 @@ const AboutPage: React.FC = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-900 text-white">
+      <section className="py-16 bg-blue-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Join Our Journey?</h2>
-          <p className="text-xl text-gray-300 mb-8">
+          <p className="text-xl text-blue-100 mb-8">
             Whether you're looking for your next adventure or want to be part of our team, 
             we'd love to hear from you.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+            <Button size="lg" variant="default">
               Start Planning Your Trip
             </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-gray-900">
+            <Button size="lg" variant="outline" className="bg-white border-white text-blue-600 hover:bg-blue-50">
               View Career Opportunities
             </Button>
           </div>

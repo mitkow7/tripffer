@@ -47,11 +47,6 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/deals" className="text-gray-400 hover:text-white transition-colors">
-                  Best Deals
-                </Link>
-              </li>
-              <li>
                 <Link to="/help" className="text-gray-400 hover:text-white transition-colors">
                   Help Center
                 </Link>

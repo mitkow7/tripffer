@@ -58,7 +58,15 @@ const RoomWidget = ({ rooms, hotelId }: RoomWidgetProps) => {
                 </span>
                 <span className="text-gray-600 text-sm ml-1">/night</span>
               </div>
-              {isHotelUser ? (
+              {!user ? (
+                <Link
+                  to={`/login`}
+                  state={{ from: `/hotel/${hotelId}/room/${room.id}/book` }}
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-600 transition-colors"
+                >
+                  Login to Book
+                </Link>
+              ) : isHotelUser ? (
                 <span className="bg-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm cursor-not-allowed">
                   Hotels Cannot Book
                 </span>

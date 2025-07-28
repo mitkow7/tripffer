@@ -10,6 +10,7 @@ from datetime import timedelta
 from accounts.models import UserProfile
 from hotels.models import Hotel, HotelImage
 from django.db import transaction
+from rest_framework import serializers
 
 
 class RegisterView(APIView):
@@ -18,10 +19,36 @@ class RegisterView(APIView):
     """
     permission_classes = [AllowAny]
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
+        # Extract hotel data if present
+        hotel_data = request.data.pop('hotel', None)
+        
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            
+            # Create hotel if user role is HOTEL and hotel data is provided
+            if user.role == 'HOTEL' and hotel_data:
+                try:
+                    hotel = Hotel.objects.create(
+                        user=user,
+                        name=hotel_data.get('name', ''),
+                        address=hotel_data.get('address', ''),
+                        website=hotel_data.get('website', ''),
+                        description=hotel_data.get('description', '')
+                    )
+                    
+                    # Add amenities
+                    if 'amenities' in hotel_data:
+                        hotel.amenities = hotel_data['amenities']
+                        hotel.save()
+                except Exception as e:
+                    # If hotel creation fails, rollback the transaction
+                    raise serializers.ValidationError({
+                        'hotel': str(e)
+                    })
+            
             refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user).data,

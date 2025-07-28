@@ -270,7 +270,7 @@ const HomePage: React.FC = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white hover:text-blue-600"
+                className="bg-white border-white text-blue-600 hover:bg-blue-50"
               >
                 Create Account
               </Button>

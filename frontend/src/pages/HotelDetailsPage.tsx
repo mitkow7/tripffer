@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   MapPin,
   Star,
@@ -25,6 +25,7 @@ import {
   useFavorites,
   useToggleFavorite,
   useHotelDetails,
+  useCurrentUser,
 } from "../hooks/useApi";
 import { BACKEND_URL } from "../config/api";
 import Carousel from "../components/ui/Carousel";
@@ -44,6 +45,8 @@ const amenityIcons: { [key: string]: React.ReactElement } = {
 
 const HotelDetailsPage = () => {
   const { hotelId } = useParams<{ hotelId: string }>();
+  const navigate = useNavigate();
+  const { data: user } = useCurrentUser();
   const { data: hotel, isLoading, error } = useHotelDetails(hotelId || "");
   const [showAllPhotos, setShowAllPhotos] = useState(false);
   const { data: favoritesData, isLoading: favoritesLoading } = useFavorites();
@@ -66,6 +69,20 @@ const HotelDetailsPage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  // Helper function to handle room booking
+  const handleBookRoom = (roomId: string) => {
+    if (!user) {
+      navigate('/login', { 
+        state: { from: `/hotel/${hotelId}/room/${roomId}/book` }
+      });
+      return;
+    }
+    if (user.role === 'HOTEL') {
+      return; // Hotel users cannot book
+    }
+    navigate(`/hotel/${hotelId}/room/${roomId}/book`);
   };
 
   if (isLoading) {
@@ -268,12 +285,24 @@ const HotelDetailsPage = () => {
                                   / night
                                 </span>
                               </div>
-                              <Link
-                                to={`/hotel/${hotelId}/room/${room.id}/book`}
-                                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                              <button
+                                onClick={() => handleBookRoom(room.id)}
+                                className={`px-6 py-2 rounded-lg transition-colors ${
+                                  !user 
+                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                    : user.role === 'HOTEL'
+                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                                }`}
+                                disabled={user?.role === 'HOTEL'}
                               >
-                                Book Now
-                              </Link>
+                                {!user 
+                                  ? 'Login to Book'
+                                  : user.role === 'HOTEL'
+                                  ? 'Hotels Cannot Book'
+                                  : 'Book Now'
+                                }
+                              </button>
                             </div>
                           </div>
                         </div>

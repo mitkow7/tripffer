@@ -63,26 +63,6 @@ const ContactPage: React.FC = () => {
     },
   ];
 
-  const offices = [
-    {
-      city: "New York",
-      address: "123 Broadway, Suite 456\nNew York, NY 10001",
-      phone: "+1 (212) 555-0123",
-      hours: "Mon-Fri: 9AM-6PM EST",
-    },
-    {
-      city: "San Francisco",
-      address: "456 Market Street, Floor 12\nSan Francisco, CA 94102",
-      phone: "+1 (415) 555-0456",
-      hours: "Mon-Fri: 9AM-6PM PST",
-    },
-    {
-      city: "London",
-      address: "789 Oxford Street\nLondon W1C 1JN, UK",
-      phone: "+44 20 7946 0789",
-      hours: "Mon-Fri: 9AM-5PM GMT",
-    },
-  ];
 
   const categories = [
     "General Inquiry",
@@ -130,46 +110,6 @@ const ContactPage: React.FC = () => {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Contact Methods */}
-        <section className="mb-16">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Choose Your Preferred Contact Method
-            </h2>
-            <p className="text-xl text-gray-600">
-              We offer multiple ways to get the help you need
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {contactMethods.map((method, index) => (
-              <Card key={index} hover className="p-8 text-center">
-                <div
-                  className={`inline-flex items-center justify-center w-16 h-16 bg-${method.color}-100 rounded-full mb-6`}
-                >
-                  <method.icon className={`w-8 h-8 text-${method.color}-600`} />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                  {method.title}
-                </h3>
-                <p className="text-gray-600 mb-4">{method.description}</p>
-                <p className="text-sm text-gray-500 mb-6">{method.detail}</p>
-                <Button
-                  className={`w-full bg-${method.color}-600 hover:bg-${method.color}-700`}
-                  disabled={!method.available}
-                >
-                  {method.action}
-                </Button>
-                {method.available && (
-                  <div className="flex items-center justify-center mt-3 text-green-600">
-                    <CheckCircle className="w-4 h-4 mr-1" />
-                    <span className="text-sm">Available now</span>
-                  </div>
-                )}
-              </Card>
-            ))}
-          </div>
-        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
@@ -314,41 +254,6 @@ const ContactPage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-            </Card>
-
-            {/* Office Locations */}
-            <Card className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Our Offices
-              </h3>
-              <div className="space-y-6">
-                {offices.map((office, index) => (
-                  <div
-                    key={index}
-                    className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0"
-                  >
-                    <h4 className="font-semibold text-gray-900 mb-2">
-                      {office.city}
-                    </h4>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-start space-x-2">
-                        <MapPin className="w-4 h-4 mt-0.5 text-gray-400" />
-                        <div className="whitespace-pre-line">
-                          {office.address}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Phone className="w-4 h-4 text-gray-400" />
-                        <span>{office.phone}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        <span>{office.hours}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
               </div>
             </Card>
 

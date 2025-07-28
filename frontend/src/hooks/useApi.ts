@@ -161,6 +161,8 @@ export function useCurrentUser() {
         },
       };
     },
+    enabled: !!localStorage.getItem("accessToken"), // Only run query if we have a token
+    retry: false, // Don't retry on failure
   });
 }
 

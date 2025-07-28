@@ -86,6 +86,7 @@ const RegisterPage: React.FC = () => {
       const registrationData = {
         email: data.email,
         password: data.password,
+        password_confirm: data.confirmPassword,
         first_name: data.firstName,
         last_name: data.lastName,
         role: data.role,

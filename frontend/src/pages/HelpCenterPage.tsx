@@ -102,46 +102,9 @@ const HelpCenterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
-              How can we help you?
-            </h1>
-            <p className="text-xl text-blue-100 mb-8">
-              Find answers to your questions and get the support you need
-            </p>
-            
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search for help articles..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 text-gray-900 bg-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-300 text-lg"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Quick Contact */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-full mb-4">
-              <MessageCircle className="w-6 h-6 text-blue-600" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Live Chat</h3>
-            <p className="text-gray-600 mb-4">Get instant help from our support team</p>
-            <Button size="sm">Start Chat</Button>
-          </Card>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto">
           <Card className="p-6 text-center hover:shadow-lg transition-shadow">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
               <Phone className="w-6 h-6 text-green-600" />
@@ -160,28 +123,6 @@ const HelpCenterPage: React.FC = () => {
             <Button size="sm" variant="outline">Send Email</Button>
           </Card>
         </div>
-
-        {/* Help Categories */}
-        <section className="mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Browse by Category</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {categories.map((category, index) => (
-              <Card key={index} hover className="p-6 cursor-pointer">
-                <div className="flex items-start space-x-4">
-                  <div className="text-3xl">{category.icon}</div>
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{category.title}</h3>
-                    <p className="text-gray-600 text-sm mb-3">{category.description}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-blue-600">{category.articles} articles</span>
-                      <ChevronRight className="w-4 h-4 text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </section>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* FAQ Section */}
@@ -224,21 +165,6 @@ const HelpCenterPage: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-8">
-            {/* Popular Articles */}
-            <Card className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Popular Articles</h3>
-              <div className="space-y-3">
-                {popularArticles.map((article, index) => (
-                  <a
-                    key={index}
-                    href="#"
-                    className="block text-blue-600 hover:text-blue-700 text-sm hover:underline"
-                  >
-                    {article}
-                  </a>
-                ))}
-              </div>
-            </Card>
 
             {/* Contact Hours */}
             <Card className="p-6">
@@ -275,7 +201,7 @@ const HelpCenterPage: React.FC = () => {
               <p className="text-red-700 text-sm mb-4">
                 If you're currently traveling and need immediate assistance:
               </p>
-              <Button variant="danger" size="sm" className="w-full">
+              <Button variant="destructive" size="sm" className="w-full">
                 Call Emergency Line
               </Button>
               <p className="text-xs text-red-600 mt-2 text-center">

@@ -6,21 +6,29 @@ import { useCurrentUser } from "../hooks/useApi";
 const BookingPage = () => {
   const { hotelId, roomId } = useParams<{ hotelId: string; roomId: string }>();
   const navigate = useNavigate();
-  const { data: user } = useCurrentUser();
+  const { data: user, isLoading } = useCurrentUser();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirect hotel users away from booking page
+  // Redirect unauthenticated and hotel users
   useEffect(() => {
-    if (user?.role === 'HOTEL') {
-      navigate('/hotel-dashboard', { replace: true });
+    if (!isLoading) {
+      if (!user) {
+        // Redirect to login and save the intended destination
+        navigate('/login', { 
+          state: { from: `/hotel/${hotelId}/room/${roomId}/book` },
+          replace: true 
+        });
+      } else if (user.role === 'HOTEL') {
+        navigate('/hotel-dashboard', { replace: true });
+      }
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate, hotelId, roomId]);
 
-  // Don't render the booking form for hotel users
-  if (user?.role === 'HOTEL') {
+  // Don't render the booking form for unauthenticated or hotel users
+  if (isLoading || !user || user.role === 'HOTEL') {
     return null;
   }
 

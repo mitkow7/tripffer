@@ -73,7 +73,7 @@ const Header: React.FC = () => {
 
           {/* User Menu */}
           <div className="flex items-center space-x-4">
-            {userLoading ? (
+            {userLoading && localStorage.getItem("accessToken") ? (
               <div className="animate-pulse flex space-x-2 items-center">
                 <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
                 <div className="h-4 w-24 bg-gray-200 rounded"></div>
