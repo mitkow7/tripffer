@@ -39,11 +39,13 @@ class HotelAdmin(ModelAdmin):
         'bookings_count',
         'avg_rating',
         'is_active',
+        'approval_status',
         'created_date'
     )
     list_display_links = ('id', 'name')
     search_fields = ('name', 'address', 'user__email', 'user__first_name', 'user__last_name')
     list_filter = (
+        'is_approved',
         'stars',
         'price_per_night',
         'guest_score',
@@ -56,7 +58,7 @@ class HotelAdmin(ModelAdmin):
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('user', 'name', 'stars', 'address', 'website', 'description')
+            'fields': ('user', 'name', 'stars', 'address', 'website', 'description', 'is_approved')
         }),
         ('Contact Information', {
             'fields': ('contact_email', 'contact_phone'),
@@ -77,7 +79,7 @@ class HotelAdmin(ModelAdmin):
         }),
     )
     
-    actions = ['activate_hotels', 'deactivate_hotels', 'reset_guest_scores']
+    actions = ['activate_hotels', 'deactivate_hotels', 'reset_guest_scores', 'approve_hotels', 'unapprove_hotels']
     
     @display(description="Owner")
     def owner_link(self, obj):
@@ -125,6 +127,22 @@ class HotelAdmin(ModelAdmin):
     @display(description="Created")
     def created_date(self, obj):
         return obj.user.date_joined.strftime("%Y-%m-%d") if obj.user else "-"
+    
+    @display(description="Approval Status")
+    def approval_status(self, obj):
+        if obj.is_approved:
+            return format_html('<span class="badge badge-success">Approved</span>')
+        return format_html('<span class="badge badge-warning">Pending</span>')
+
+    def approve_hotels(self, request, queryset):
+        updated = queryset.update(is_approved=True)
+        self.message_user(request, f'{updated} hotels were approved.')
+    approve_hotels.short_description = "Approve selected hotels"
+    
+    def unapprove_hotels(self, request, queryset):
+        updated = queryset.update(is_approved=False)
+        self.message_user(request, f'{updated} hotels were unapproved.')
+    unapprove_hotels.short_description = "Unapprove selected hotels"
     
     def activate_hotels(self, request, queryset):
         for hotel in queryset:

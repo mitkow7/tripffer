@@ -18,6 +18,7 @@ import HotelDetailsPage from "./pages/HotelDetailsPage";
 import BookingPage from "./pages/BookingPage";
 import BookingsPage from "./pages/BookingsPage";
 import FavoritesPage from "./pages/FavoritesPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function App() {
   return (
@@ -45,6 +46,8 @@ function App() {
               />
               <Route path="/bookings" element={<BookingsPage />} />
               <Route path="/favorites" element={<FavoritesPage />} />
+              {/* 404 route - must be last */}
+              <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </main>
           <Footer />

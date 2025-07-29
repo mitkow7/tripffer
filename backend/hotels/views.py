@@ -42,6 +42,11 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
         # Start with all hotels
         queryset = Hotel.objects.all()
 
+        # Display only approved hotels to non-admin users
+        user = self.request.user
+        if not user.is_authenticated or not user.is_staff:
+            queryset = queryset.filter(is_approved=True)
+
         # Filter by city first (if provided)
         if city:
             queryset = queryset.filter(address__icontains=city)

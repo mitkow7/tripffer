@@ -1,0 +1,311 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{% trans '403 Forbidden' %}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">{% trans 'Access Denied' %}</h1>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="error-container">
+        <div class="error-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <div class="error-content">
+            <h2>{% trans 'Permission Denied' %}</h2>
+            <div class="message-container">
+                <p class="main-message">{% trans "We're sorry, but you don't have permission to access this page." %}</p>
+                <p class="sub-message">{% trans "If you believe this is a mistake, please contact your administrator." %}</p>
+                
+                {% if user.is_authenticated %}
+                    <div class="user-info">
+                        <div class="user-avatar">{{ user.email|first|upper }}</div>
+                        <div class="user-details">
+                            <p>{% trans "You are logged in as" %}</p>
+                            <strong>{{ user.email }}</strong>
+                        </div>
+                    </div>
+                    {% if user.is_staff %}
+                        <p class="status-message staff">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            {% trans "You are a staff member but may need additional permissions." %}
+                        </p>
+                    {% else %}
+                        <p class="status-message">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            {% trans "You need staff status to access the admin interface." %}
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p class="status-message">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10 17 15 12 10 7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        {% trans "Please log in with an account that has the required permissions." %}
+                    </p>
+                {% endif %}
+                
+                <div class="actions">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'admin:index' %}" class="button primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            {% trans 'Return to Dashboard' %}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'admin:login' %}" class="button primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                <polyline points="10 17 15 12 10 7"></polyline>
+                                <line x1="15" y1="12" x2="3" y2="12"></line>
+                            </svg>
+                            {% trans 'Log In' %}
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #content-main {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .error-container {
+        background: var(--body-bg);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        overflow: hidden;
+        animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .error-icon {
+        background: var(--primary);
+        padding: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .error-icon svg {
+        width: 64px;
+        height: 64px;
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .error-content {
+        padding: 2rem;
+    }
+
+    .error-content h2 {
+        margin: 0 0 1.5rem;
+        color: var(--primary);
+        font-size: 1.8rem;
+        font-weight: 600;
+    }
+
+    .message-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .main-message {
+        font-size: 1.2rem;
+        color: #2c3e50;
+        margin: 0 0 1rem;
+    }
+
+    .sub-message {
+        color: #7f8c8d;
+        margin-bottom: 2rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        margin: 2rem 0;
+        padding: 1rem;
+        background: #f8fafc;
+        border-radius: 8px;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .user-avatar {
+        width: 48px;
+        height: 48px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .user-details p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+    }
+
+    .user-details strong {
+        color: #1e293b;
+        font-size: 1.1rem;
+    }
+
+    .status-message {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: #f1f5f9;
+        border-radius: 8px;
+        color: #475569;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+    }
+
+    .status-message svg {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.75rem;
+        color: var(--primary);
+    }
+
+    .status-message.staff {
+        background: #ecfdf5;
+        color: #065f46;
+    }
+
+    .actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+
+    .button {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+
+    .button svg {
+        width: 20px;
+        height: 20px;
+        margin-right: 0.5rem;
+    }
+
+    .button.primary {
+        background: var(--primary);
+        color: white;
+    }
+
+    .button.primary:hover {
+        background: var(--primary-darker);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    @media (max-width: 640px) {
+        .error-icon svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .error-content {
+            padding: 1.5rem;
+        }
+
+        .message-container {
+            padding: 1.5rem;
+        }
+
+        .user-info {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .user-avatar {
+            margin: 0 0 1rem;
+        }
+
+        .actions {
+            flex-direction: column;
+        }
+
+        .button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %} 

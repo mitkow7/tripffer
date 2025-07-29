@@ -37,6 +37,10 @@ class Hotel(models.Model):
     name = models.CharField(
         max_length=255,
     )
+    is_approved = models.BooleanField(
+        default=False,
+        help_text="Whether this hotel has been approved by an admin",
+    )
     stars = models.IntegerField(
         default=0,
     )
