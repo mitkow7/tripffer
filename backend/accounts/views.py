@@ -21,10 +21,13 @@ class RegisterView(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        # Extract hotel data if present
-        hotel_data = request.data.pop('hotel', None)
+        # Create a mutable copy of the data
+        data = request.data.copy()
         
-        serializer = RegisterSerializer(data=request.data)
+        # Extract hotel data if present
+        hotel_data = data.pop('hotel', None)
+        
+        serializer = RegisterSerializer(data=data)
         if serializer.is_valid():
             user = serializer.save()
             
