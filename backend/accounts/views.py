@@ -11,6 +11,7 @@ from accounts.models import UserProfile
 from hotels.models import Hotel, HotelImage
 from django.db import transaction
 from rest_framework import serializers
+from .utils import send_welcome_email
 
 
 class RegisterView(APIView):
@@ -51,6 +52,9 @@ class RegisterView(APIView):
                     raise serializers.ValidationError({
                         'hotel': str(e)
                     })
+            
+            # Send welcome email
+            send_welcome_email(user)
             
             refresh = RefreshToken.for_user(user)
             return Response({
