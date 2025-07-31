@@ -83,10 +83,7 @@ export const useLogin = () => {
       password: string;
       remember_me?: boolean;
     }) => {
-      const response = await axios.post<LoginResponse>(
-        "/api/accounts/login/",
-        data
-      );
+      const response = await api.post<LoginResponse>("/accounts/login/", data);
       return response.data;
     },
     onSuccess: (data) => {
@@ -113,21 +110,13 @@ export function useRegister() {
       setIsPending(true);
       setIsError(false);
       try {
-        const response = await fetch(
-          "http://localhost:8000/api/accounts/register/",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          }
-        );
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(JSON.stringify(errorData));
+        const response = await api.post("/accounts/register/", data);
+        return response.data;
+      } catch (error: any) {
+        if (error.response?.data) {
+          throw new Error(JSON.stringify(error.response.data));
         }
-        return await response.json();
+        throw error;
       } finally {
         setIsPending(false);
       }
