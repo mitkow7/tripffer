@@ -37,19 +37,11 @@ ptyprocess==0.7.0
 pure_eval==0.2.3
 Pygments==2.19.1
 PyJWT==2.10.1
-pynput==1.8.1
-pyobjc-core==11.0
-pyobjc-framework-ApplicationServices==11.0
-pyobjc-framework-Cocoa==11.0
-pyobjc-framework-CoreText==11.0
-pyobjc-framework-Quartz==11.0
 python-dateutil==2.9.0.post0
 python-decouple==3.8
 pytz==2025.2
-pywifi==1.1.12
 redis==5.0.1
 requests==2.31.0
-scapy==2.6.1
 six==1.17.0
 soupsieve==2.7
 sqlparse==0.5.0
@@ -62,4 +54,3 @@ vine==5.1.0
 virtualenv==20.29.2
 wcwidth==0.2.13
 gunicorn==21.2.0
-whitenoise==6.6.0
