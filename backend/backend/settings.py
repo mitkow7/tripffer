@@ -182,8 +182,28 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# For production on Render
+if not DEBUG:
+    # Media files on Render
+    RENDER_EXTERNAL_HOSTNAME = config('RENDER_EXTERNAL_HOSTNAME', default='')
+    if RENDER_EXTERNAL_HOSTNAME:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+    # Static files
+    STATIC_URL = 'static/'
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    STATICFILES_DIRS = [
+        BASE_DIR / 'static',
+    ]
+
+    # Media files
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = BASE_DIR / 'mediafiles'
+    MEDIA_URL = '/media/'
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = False
