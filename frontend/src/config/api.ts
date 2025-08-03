@@ -1,6 +1,8 @@
 import axios from "axios";
 
-export const BACKEND_URL = import.meta.env.VITE_API_URL || "https://tripffer.onrender.com";
+// In production, always use the production URL
+const isProduction = import.meta.env.PROD;
+export const BACKEND_URL = isProduction ? "https://tripffer.onrender.com" : "http://localhost:8000";
 export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com";
 
 export const getImageUrl = (path: string) => {
@@ -17,7 +19,7 @@ const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  withCredentials: false, // Disable credentials for simpler CORS
+  withCredentials: true, // Enable credentials for production
 });
 
 // Add request interceptor to add auth token
