@@ -134,9 +134,27 @@ def user_profile(request):
 
         # Handle profile data
         profile_data = {}
-        for field in ['phone_number', 'date_of_birth', 'bio']:
+        for field in ['phone_number', 'bio']:
             if field in request.data:
                 profile_data[field] = request.data[field]
+        
+        # Handle date_of_birth separately
+        if 'date_of_birth' in request.data:
+            date_value = request.data['date_of_birth']
+            # Set to None if empty string, null, or undefined
+            if not date_value or date_value in ['', 'null', 'undefined']:
+                profile_data['date_of_birth'] = None
+            else:
+                try:
+                    # Validate date format
+                    from datetime import datetime
+                    datetime.strptime(date_value, '%Y-%m-%d')
+                    profile_data['date_of_birth'] = date_value
+                except ValueError:
+                    return Response(
+                        {'date_of_birth': ['Invalid date format. Use YYYY-MM-DD format.']},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
         
         if profile_data:
             for key, value in profile_data.items():
@@ -185,4 +203,3 @@ class DeleteAccountView(APIView):
         user.delete()
 
         return Response({"detail": "Account successfully deleted"}, status=status.HTTP_200_OK)
-
