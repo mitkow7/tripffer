@@ -189,8 +189,15 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+# Media files configuration will be handled by storage.py
+MEDIA_URL = '/media/'  # This will be overridden by storage.py if using S3
+MEDIA_ROOT = BASE_DIR / 'media'  # This will be overridden by storage.py if using S3
+
+# Import storage settings after setting defaults
+try:
+    from .storage import *
+except ImportError:
+    pass
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = False

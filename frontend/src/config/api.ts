@@ -6,9 +6,9 @@ export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.
 export const getImageUrl = (path: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  // Remove any leading slashes to avoid double slashes
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${MEDIA_URL}${cleanPath}`;
+  // Remove any leading slashes and media prefix
+  const cleanPath = path.replace(/^\//, '').replace(/^media\//, '');
+  return `${MEDIA_URL}/${cleanPath}`;
 };
 
 const api = axios.create({
