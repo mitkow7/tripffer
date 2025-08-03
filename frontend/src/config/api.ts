@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const BACKEND_URL = import.meta.env.VITE_API_URL || "https://tripffer.onrender.com";
 export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com";
 
 export const getImageUrl = (path: string) => {
@@ -17,7 +17,7 @@ const api = axios.create({
     "Content-Type": "application/json",
     "Accept": "application/json",
   },
-  withCredentials: true,
+  withCredentials: false, // Disable credentials for simpler CORS
 });
 
 // Add request interceptor to add auth token
