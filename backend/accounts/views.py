@@ -73,26 +73,32 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            password = serializer.validated_data['password']
-            user = authenticate(email=email, password=password)
+        try:
+            serializer = self.serializer_class(data=request.data)
+            if serializer.is_valid():
+                email = serializer.validated_data['email']
+                password = serializer.validated_data['password']
+                user = authenticate(email=email, password=password)
+                
+                if user:
+                    refresh = RefreshToken.for_user(user)
+                    return Response({
+                        'access': str(refresh.access_token),
+                        'refresh': str(refresh),
+                        'user': UserSerializer(user).data
+                    })
+                
+                return Response(
+                    {'error': 'Email or password is incorrect'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
             
-            if user:
-                refresh = RefreshToken.for_user(user)
-                return Response({
-                    'access': str(refresh.access_token),
-                    'refresh': str(refresh),
-                    'user': UserSerializer(user).data
-                })
-            
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
             return Response(
-                {'error': 'Email or password is incorrect'},
-                status=status.HTTP_401_UNAUTHORIZED
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PasswordChangeView(APIView):
@@ -157,10 +163,14 @@ def user_profile(request):
             request.user.profile.save()
 
         # Handle profile picture last
-        profile_picture = request.FILES.get('profile_picture')
-        if profile_picture:
-            request.user.profile.profile_picture = profile_picture
-            request.user.profile.save()
+        try:
+            profile_picture = request.FILES.get('profile_picture')
+            if profile_picture:
+                request.user.profile.profile_picture = profile_picture
+                request.user.profile.save()
+        except Exception as e:
+            # Log the error but don't fail the whole request
+            print(f"Error handling profile picture: {str(e)}")
 
         # Handle user data
         user_data = {}
