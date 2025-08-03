@@ -126,19 +126,13 @@ def user_profile(request):
         if not hasattr(request.user, 'profile'):
             UserProfile.objects.create(user=request.user)
 
-        # Handle profile picture
-        profile_picture = request.FILES.get('profile_picture')
-        if profile_picture:
-            request.user.profile.profile_picture = profile_picture
-            request.user.profile.save()
-
-        # Handle profile data
+        # Handle profile data first
         profile_data = {}
         for field in ['phone_number', 'bio']:
             if field in request.data:
                 profile_data[field] = request.data[field]
         
-        # Handle date_of_birth separately
+        # Handle date_of_birth separately with validation
         if 'date_of_birth' in request.data:
             date_value = request.data['date_of_birth']
             # Set to None if empty string, null, or undefined
@@ -155,10 +149,17 @@ def user_profile(request):
                         {'date_of_birth': ['Invalid date format. Use YYYY-MM-DD format.']},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-        
+
+        # Update profile data first
         if profile_data:
             for key, value in profile_data.items():
                 setattr(request.user.profile, key, value)
+            request.user.profile.save()
+
+        # Handle profile picture last
+        profile_picture = request.FILES.get('profile_picture')
+        if profile_picture:
+            request.user.profile.profile_picture = profile_picture
             request.user.profile.save()
 
         # Handle user data
