@@ -10,8 +10,12 @@ AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1').split('#
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = 'public-read'
 AWS_S3_VERIFY = True
-AWS_S3_ADDRESSING_STYLE = 'virtual'
-AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+AWS_BUCKET_ACL = 'public-read'
+AWS_DEFAULT_ACL = 'public-read'
 
 # Generate custom domain for S3
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
@@ -20,7 +24,7 @@ AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazo
 if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
     # Use S3 for media storage
     DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
+    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'  # Root of the bucket
 else:
     # Use local storage for media
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'

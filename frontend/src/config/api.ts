@@ -1,12 +1,14 @@
 import axios from "axios";
 
 export const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || BACKEND_URL;
+export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com";
 
 export const getImageUrl = (path: string) => {
   if (!path) return '';
   if (path.startsWith('http')) return path;
-  return `${MEDIA_URL}${path}`;
+  // Remove any leading slashes to avoid double slashes
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${MEDIA_URL}${cleanPath}`;
 };
 
 const api = axios.create({
