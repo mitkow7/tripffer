@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ImageViewer from "./ImageViewer";
-import { BACKEND_URL } from "../../config/api";
+import { getImageUrl } from "../../config/api";
 
 interface ImageGridProps {
   images: { id: string | number; image: string }[];
@@ -32,32 +32,19 @@ const ImageGrid: React.FC<ImageGridProps> = ({ images, onShowAll }) => {
             onClick={() => setSelectedImageIndex(0)}
           >
             <img
-              src={`${BACKEND_URL}${mainImage.image}`}
+              src={getImageUrl(mainImage.image)}
               alt="Hotel view"
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           </div>
-          {otherImages.slice(0, 2).map((img, index) => (
+          {otherImages.map((img, index) => (
             <div
               key={img.id}
               className="overflow-hidden cursor-pointer"
               onClick={() => setSelectedImageIndex(index + 1)}
             >
               <img
-                src={`${BACKEND_URL}${img.image}`}
-                alt="Hotel view"
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-          ))}
-          {otherImages.slice(2, 4).map((img, index) => (
-            <div
-              key={img.id}
-              className="overflow-hidden cursor-pointer"
-              onClick={() => setSelectedImageIndex(index + 3)}
-            >
-              <img
-                src={`${BACKEND_URL}${img.image}`}
+                src={getImageUrl(img.image)}
                 alt="Hotel view"
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />

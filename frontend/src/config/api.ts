@@ -1,6 +1,13 @@
 import axios from "axios";
 
 export const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || BACKEND_URL;
+
+export const getImageUrl = (path: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${MEDIA_URL}${path}`;
+};
 
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
