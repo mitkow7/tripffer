@@ -203,8 +203,10 @@ except ImportError:
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://tripffer.vercel.app',
-    'https://www.tripffer.vercel.app',
 ]
+
+# Additional CORS settings
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
     'GET',
@@ -213,7 +215,24 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+
+# Required headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Security settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://tripffer.vercel.app',
+]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
