@@ -2,7 +2,7 @@ import axios from "axios";
 
 // In production, always use the production URL
 const isProduction = import.meta.env.PROD;
-export const BACKEND_URL = "https://tripffer.onrender.com";
+export const BACKEND_URL = "https://tripffer-backend.onrender.com";
 export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com";
 
 export const getImageUrl = (path: string) => {
