@@ -20,5 +20,6 @@ class CustomAuthenticationBackend(ModelBackend):
             return None
         except UserModel.DoesNotExist:
             return None
-        except Exception:
-            return None 
+        except Exception as e:
+            print(f"Authentication error: {str(e)}")  # Log the error
+            raise  # Re-raise to let the view handle it 

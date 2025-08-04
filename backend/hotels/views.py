@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework import generics, viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -32,63 +33,67 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
         return context
 
     def get_queryset(self):
-        # Get all query parameters
-        city = self.request.query_params.get('city')
-        beds_str = self.request.query_params.get('beds')
-        adults_str = self.request.query_params.get('adults')
-        check_in_str = self.request.query_params.get('check_in')
-        check_out_str = self.request.query_params.get('check_out')
+        try:
+            # Get all query parameters
+            city = self.request.query_params.get('city')
+            beds_str = self.request.query_params.get('beds')
+            adults_str = self.request.query_params.get('adults')
+            check_in_str = self.request.query_params.get('check_in')
+            check_out_str = self.request.query_params.get('check_out')
 
-        # Start with all hotels
-        queryset = Hotel.objects.all()
+            # Start with all hotels
+            queryset = Hotel.objects.all()
 
-        # Display only approved hotels to non-admin users
-        user = getattr(self.request, 'user', None)
-        if not user or not getattr(user, 'is_staff', False):
-            queryset = queryset.filter(is_approved=True)
+            # Display only approved hotels to non-admin users
+            user = getattr(self.request, 'user', None)
+            if not user or not getattr(user, 'is_staff', False):
+                queryset = queryset.filter(is_approved=True)
 
-        # Filter by city first (if provided)
-        if city:
-            queryset = queryset.filter(address__icontains=city)
+            # Filter by city first (if provided)
+            if city:
+                queryset = queryset.filter(address__icontains=city)
 
-        # Only apply room-based filters if room search parameters are provided
-        if any([beds_str, adults_str, check_in_str, check_out_str]):
-            # Start with a base queryset of all rooms
-            eligible_rooms = Room.objects.all()
+            # Only apply room-based filters if room search parameters are provided
+            if any([beds_str, adults_str, check_in_str, check_out_str]):
+                # Start with a base queryset of all rooms
+                eligible_rooms = Room.objects.all()
 
-            # Filter rooms by bed count
-            if beds_str and beds_str.isdigit():
-                eligible_rooms = eligible_rooms.filter(bed_count__gte=int(beds_str))
+                # Filter rooms by bed count
+                if beds_str and beds_str.isdigit():
+                    eligible_rooms = eligible_rooms.filter(bed_count__gte=int(beds_str))
 
-            # Filter rooms by adult capacity
-            if adults_str and adults_str.isdigit():
-                eligible_rooms = eligible_rooms.filter(max_adults__gte=int(adults_str))
+                # Filter rooms by adult capacity
+                if adults_str and adults_str.isdigit():
+                    eligible_rooms = eligible_rooms.filter(max_adults__gte=int(adults_str))
 
-            # Exclude rooms that are unavailable for the selected dates
-            if check_in_str and check_out_str:
-                try:
-                    check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
-                    check_out_date = datetime.strptime(check_out_str, '%Y-%m-%d').date()
+                # Exclude rooms that are unavailable for the selected dates
+                if check_in_str and check_out_str:
+                    try:
+                        check_in_date = datetime.strptime(check_in_str, '%Y-%m-%d').date()
+                        check_out_date = datetime.strptime(check_out_str, '%Y-%m-%d').date()
 
-                    # Find IDs of rooms that have conflicting bookings
-                    booked_room_ids = Booking.objects.filter(
-                        start_date__lt=check_out_date,
-                        end_date__gt=check_in_date
-                    ).values_list('room_id', flat=True)
+                        # Find IDs of rooms that have conflicting bookings
+                        booked_room_ids = Booking.objects.filter(
+                            start_date__lt=check_out_date,
+                            end_date__gt=check_in_date
+                        ).values_list('room_id', flat=True)
 
-                    # Exclude these booked rooms
-                    eligible_rooms = eligible_rooms.exclude(id__in=booked_room_ids)
-                except (ValueError, TypeError):
-                    # Ignore invalid date formats
-                    pass
-            
-            # Get the IDs of hotels that have at least one eligible room
-            hotel_ids_with_available_rooms = eligible_rooms.values_list('hotel_id', flat=True).distinct()
+                        # Exclude these booked rooms
+                        eligible_rooms = eligible_rooms.exclude(id__in=booked_room_ids)
+                    except (ValueError, TypeError):
+                        # Ignore invalid date formats
+                        pass
+                
+                # Get the IDs of hotels that have at least one eligible room
+                hotel_ids_with_available_rooms = eligible_rooms.values_list('hotel_id', flat=True).distinct()
 
-            # Filter to only include hotels that have available rooms matching the criteria
-            queryset = queryset.filter(id__in=hotel_ids_with_available_rooms)
+                # Filter to only include hotels that have available rooms matching the criteria
+                queryset = queryset.filter(id__in=hotel_ids_with_available_rooms)
 
-        return queryset.distinct()
+            return queryset.distinct()
+        except Exception as e:
+            print(f"Error in get_queryset: {str(e)}")  # Log the error
+            return Hotel.objects.none()  # Return empty queryset on error
 
 
 class MyHotelView(viewsets.ViewSet):

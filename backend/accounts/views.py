@@ -225,16 +225,6 @@ def user_profile(request):
             if not hasattr(request.user, 'profile'):
                 UserProfile.objects.create(user=request.user)
                 request.user.refresh_from_db()
-            
-            serializer = UserSerializer(request.user, data=request.data, partial=True)
-    except Exception as e:
-        return Response(
-            {'error': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-        # Ensure user has a profile
-        if not hasattr(request.user, 'profile'):
-            UserProfile.objects.create(user=request.user)
 
         # Handle profile data first
         profile_data = {}
@@ -300,6 +290,11 @@ def user_profile(request):
         # Return updated user data
         serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data)
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 class DeleteAccountView(APIView):

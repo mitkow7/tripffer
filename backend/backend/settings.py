@@ -224,6 +224,10 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:8000',
 ]
 
+# Allow all headers in development
+if DEBUG:
+    CORS_ALLOW_ALL_HEADERS = True
+
 # Allow credentials
 CORS_ALLOW_CREDENTIALS = True
 
