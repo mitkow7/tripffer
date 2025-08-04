@@ -24,9 +24,9 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
 
   const updateProfile = useUpdateProfile();
 
-  // Construct the full URL for the profile picture
+  // Construct the full URL for the profile picture with timestamp to prevent caching
   const profilePictureUrl = user?.profile?.profile_picture
-    ? getImageUrl(user.profile.profile_picture)
+    ? getImageUrl(user.profile.profile_picture, true)
     : undefined;
 
   return (

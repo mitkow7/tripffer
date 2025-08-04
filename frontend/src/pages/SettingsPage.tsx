@@ -162,7 +162,7 @@ const SettingsPage: React.FC = () => {
         // Update hotel data using hotel-specific endpoint
         const hotelData = {
           ...data,
-          hotel_images: tempProfileImages // Include selected images
+          hotel_images: tempProfileImages, // Include selected images
         };
         await updateHotel.mutateAsync(hotelData);
       } else {
@@ -179,8 +179,15 @@ const SettingsPage: React.FC = () => {
         // Add profile picture if one was selected
         if (tempProfileImages.length > 0) {
           formData.profile_picture = tempProfileImages[0];
+          console.log(
+            "Profile picture added to form data:",
+            tempProfileImages[0]
+          );
+        } else {
+          console.log("No profile picture selected");
         }
 
+        console.log("Submitting profile update with data:", formData);
         await updateProfile.mutateAsync(formData);
       }
 
@@ -192,10 +199,12 @@ const SettingsPage: React.FC = () => {
       setTempProfilePictureUrl(undefined);
 
       // Refetch user data to get the updated profile
+      console.log("Refetching user data after profile update");
       await refetch();
 
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2000);
+      console.log("Profile update completed successfully");
     } catch (error) {
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 2000);
@@ -238,7 +247,7 @@ const SettingsPage: React.FC = () => {
     try {
       await deleteAccount.mutateAsync();
     } catch (error) {
-      console.error('Failed to delete account:', error);
+      console.error("Failed to delete account:", error);
     }
   };
 
@@ -488,7 +497,8 @@ const SettingsPage: React.FC = () => {
                   </div>
                   <p className="text-red-700 mb-6">
                     This action cannot be undone. This will permanently delete
-                    your account and remove all associated data from our servers.
+                    your account and remove all associated data from our
+                    servers.
                   </p>
                   {!showDeleteConfirm ? (
                     <Button

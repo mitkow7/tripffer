@@ -13,12 +13,17 @@ export const MEDIA_URL = import.meta.env.DEV
   : import.meta.env.VITE_MEDIA_URL ||
     "https://tripffer.s3.eu-north-1.amazonaws.com";
 
-export const getImageUrl = (path: string) => {
+export const getImageUrl = (path: string, addTimestamp: boolean = false) => {
   if (!path) return "";
-  if (path.startsWith("http")) return path;
+  if (path.startsWith("http")) {
+    // For external URLs (like S3), add timestamp to prevent caching if requested
+    return addTimestamp ? `${path}?t=${Date.now()}` : path;
+  }
   // Remove any leading slashes and media prefix
   const cleanPath = path.replace(/^\//, "").replace(/^media\//, "");
-  return `${MEDIA_URL}/${cleanPath}`;
+  const url = `${MEDIA_URL}/${cleanPath}`;
+  // Add timestamp to prevent caching if requested
+  return addTimestamp ? `${url}?t=${Date.now()}` : url;
 };
 
 const api = axios.create({
@@ -37,8 +42,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Ensure content type is set for all requests
-    config.headers["Content-Type"] = "application/json";
+    // Only set content type to JSON if it's not already set (e.g., for file uploads)
+    if (!config.headers["Content-Type"]) {
+      config.headers["Content-Type"] = "application/json";
+    }
     return config;
   },
   (error) => {

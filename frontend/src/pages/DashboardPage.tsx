@@ -105,7 +105,7 @@ const DashboardPage: React.FC = () => {
             <Link to="/settings" className="mr-4">
               {user?.profile?.profile_picture ? (
                 <img
-                  src={getImageUrl(user.profile.profile_picture)}
+                  src={getImageUrl(user.profile.profile_picture, true)}
                   alt="Profile"
                   className="w-12 h-12 rounded-full object-cover shadow-sm"
                 />
