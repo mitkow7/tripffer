@@ -100,14 +100,31 @@ class HotelSerializer(serializers.ModelSerializer):
         ]
 
     def get_images(self, obj):
-        return [{'id': img.id, 'image': img.image.url} for img in obj.images.all()]
+        try:
+            request = self.context.get('request')
+            return [{
+                'id': img.id,
+                'image': request.build_absolute_uri(img.image.url) if request else img.image.url
+            } for img in obj.images.all()]
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting hotel images: {str(e)}")
+            return []
 
     def get_photo_url(self, obj):
-        if obj.images.exists():
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.images.first().image.url)
-            return obj.images.first().image.url
+        try:
+            if obj.images.exists():
+                request = self.context.get('request')
+                image = obj.images.first()
+                if request and image:
+                    return request.build_absolute_uri(image.image.url)
+                elif image:
+                    return image.image.url
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting hotel photo URL: {str(e)}")
         return None
 
     def get_amenities(self, obj):

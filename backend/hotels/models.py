@@ -126,10 +126,22 @@ class HotelImage(models.Model):
     )
     image = models.ImageField(
         upload_to='hotel_images/',
+        max_length=500,  # Increased max length for S3 URLs
     )
 
     def __str__(self):
         return f"Image for {self.hotel.name}"
+
+    def save(self, *args, **kwargs):
+        if self.image:
+            # Clean the filename to prevent issues
+            import os
+            from django.utils.text import slugify
+            filename = os.path.basename(self.image.name)
+            name, ext = os.path.splitext(filename)
+            clean_name = slugify(name)
+            self.image.name = f"hotel_images/{clean_name}{ext}"
+        super().save(*args, **kwargs)
 
 
 class Room(models.Model):

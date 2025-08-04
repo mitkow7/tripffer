@@ -221,6 +221,11 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media files configuration
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
+
 # Media files configuration will be handled by storage.py
 MEDIA_URL = '/media/'  # This will be overridden by storage.py if using S3
 MEDIA_ROOT = BASE_DIR / 'media'  # This will be overridden by storage.py if using S3

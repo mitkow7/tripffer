@@ -142,8 +142,19 @@ class MyHotelView(viewsets.ViewSet):
                 images_data = request.FILES.getlist('images')
                 if images_data:
                     from .models import HotelImage
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    
                     for image_data in images_data:
-                        HotelImage.objects.create(hotel=hotel, image=image_data)
+                        try:
+                            hotel_image = HotelImage.objects.create(hotel=hotel, image=image_data)
+                            logger.info(f"Successfully created hotel image: {hotel_image.image.url}")
+                        except Exception as e:
+                            logger.error(f"Failed to save hotel image: {str(e)}")
+                            return Response(
+                                {"error": f"Failed to save image: {str(e)}"},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                            )
                 
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
