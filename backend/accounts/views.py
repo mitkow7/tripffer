@@ -134,10 +134,20 @@ class LoginView(APIView):
 
             # Try to authenticate
             try:
-                authenticated_user = authenticate(request=request, email=email, password=password)
+                authenticated_user = authenticate(
+                    request=request,
+                    username=email,  # Django might use username internally
+                    email=email,
+                    password=password
+                )
                 if authenticated_user is None:
                     return Response(
-                        {'error': 'Invalid password'},
+                        {'error': 'Invalid email or password'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
+                if not authenticated_user.is_active:
+                    return Response(
+                        {'error': 'This account is inactive'},
                         status=status.HTTP_401_UNAUTHORIZED
                     )
             except Exception as auth_error:
