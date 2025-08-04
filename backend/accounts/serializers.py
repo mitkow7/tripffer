@@ -14,15 +14,28 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['role']
 
     def get_profile(self, obj):
-        if hasattr(obj, 'profile'):
+        try:
+            if not hasattr(obj, 'profile'):
+                from accounts.models import UserProfile
+                UserProfile.objects.create(user=obj)
+                obj.refresh_from_db()
+
             return {
                 'id': obj.profile.id,
-                'phone_number': obj.profile.phone_number,
-                'date_of_birth': obj.profile.date_of_birth,
-                'bio': obj.profile.bio,
+                'phone_number': obj.profile.phone_number or '',
+                'date_of_birth': obj.profile.date_of_birth or None,
+                'bio': obj.profile.bio or '',
                 'profile_picture': obj.profile.profile_picture.url if obj.profile.profile_picture else None
             }
-        return None
+        except Exception as e:
+            # Return a default profile if there's an error
+            return {
+                'id': None,
+                'phone_number': '',
+                'date_of_birth': None,
+                'bio': '',
+                'profile_picture': None
+            }
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)

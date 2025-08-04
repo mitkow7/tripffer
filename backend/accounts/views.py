@@ -158,11 +158,21 @@ class LoginView(APIView):
             
             # Generate tokens
             try:
+                # Ensure user has a profile before serializing
+                if not hasattr(authenticated_user, 'profile'):
+                    UserProfile.objects.create(user=authenticated_user)
+                    authenticated_user.refresh_from_db()
+
+                # Generate tokens
                 refresh = RefreshToken.for_user(authenticated_user)
+                
+                # Serialize user data
+                user_data = UserSerializer(authenticated_user).data
+                
                 response_data = {
                     'access': str(refresh.access_token),
                     'refresh': str(refresh),
-                    'user': UserSerializer(authenticated_user).data
+                    'user': user_data
                 }
                 return Response(response_data)
             except Exception as token_error:
@@ -200,11 +210,17 @@ def user_profile(request):
     GET: Get the authenticated user's profile
     PUT: Update the authenticated user's profile
     """
-    if request.method == 'GET':
-        serializer = UserSerializer(request.user, context={'request': request})
-        return Response(serializer.data)
-    
-    elif request.method == 'PUT':
+    try:
+        if request.method == 'GET':
+            # Ensure user has a profile
+            if not hasattr(request.user, 'profile'):
+                UserProfile.objects.create(user=request.user)
+                request.user.refresh_from_db()
+            
+            serializer = UserSerializer(request.user, context={'request': request})
+            return Response(serializer.data)
+        
+        elif request.method == 'PUT':
         # Ensure user has a profile
         if not hasattr(request.user, 'profile'):
             UserProfile.objects.create(user=request.user)
