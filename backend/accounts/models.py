@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from accounts.validators import PhoneNumberValidator
-
+from accounts.managers import AppUserManager
 
 class UserType(models.TextChoices):
     USER = "USER", "User"
@@ -45,6 +45,8 @@ class AppUser(AbstractUser):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["first_name", "last_name"]
+
+    objects = AppUserManager()
 
     @property
     def is_hotel(self):
