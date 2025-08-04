@@ -20,14 +20,27 @@ class UserSerializer(serializers.ModelSerializer):
                 UserProfile.objects.create(user=obj)
                 obj.refresh_from_db()
 
+            # Get profile picture URL properly
+            profile_picture_url = None
+            if obj.profile.profile_picture:
+                try:
+                    profile_picture_url = obj.profile.profile_picture.url
+                except Exception:
+                    # If URL generation fails (e.g., file doesn't exist), return None
+                    profile_picture_url = None
+
             return {
                 'id': obj.profile.id,
                 'phone_number': obj.profile.phone_number or '',
                 'date_of_birth': obj.profile.date_of_birth or None,
                 'bio': obj.profile.bio or '',
-                'profile_picture': obj.profile.profile_picture.url if obj.profile.profile_picture else None
+                'profile_picture': profile_picture_url
             }
         except Exception as e:
+            # Log the error for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error getting profile for user {obj.id}: {str(e)}")
             # Return a default profile if there's an error
             return {
                 'id': None,

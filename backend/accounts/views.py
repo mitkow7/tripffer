@@ -242,70 +242,72 @@ def user_profile(request):
                 UserProfile.objects.create(user=request.user)
                 request.user.refresh_from_db()
 
-        # Handle profile data first
-        profile_data = {}
-        for field in ['phone_number', 'bio']:
-            if field in request.data:
-                profile_data[field] = request.data[field]
-        
-        # Handle date_of_birth separately with validation
-        if 'date_of_birth' in request.data:
-            date_value = request.data['date_of_birth']
-            # Set to None if empty string, null, or undefined
-            if not date_value or date_value in ['', 'null', 'undefined']:
-                profile_data['date_of_birth'] = None
-            else:
-                try:
-                    # Validate date format
-                    from datetime import datetime
-                    datetime.strptime(date_value, '%Y-%m-%d')
-                    profile_data['date_of_birth'] = date_value
-                except ValueError:
-                    return Response(
-                        {'date_of_birth': ['Invalid date format. Use YYYY-MM-DD format.']},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            # Handle profile data first
+            profile_data = {}
+            for field in ['phone_number', 'bio']:
+                if field in request.data:
+                    profile_data[field] = request.data[field]
+            
+            # Handle date_of_birth separately with validation
+            if 'date_of_birth' in request.data:
+                date_value = request.data['date_of_birth']
+                # Set to None if empty string, null, or undefined
+                if not date_value or date_value in ['', 'null', 'undefined']:
+                    profile_data['date_of_birth'] = None
+                else:
+                    try:
+                        # Validate date format
+                        from datetime import datetime
+                        datetime.strptime(date_value, '%Y-%m-%d')
+                        profile_data['date_of_birth'] = date_value
+                    except ValueError:
+                        return Response(
+                            {'date_of_birth': ['Invalid date format. Use YYYY-MM-DD format.']},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
 
-        # Update profile data first
-        if profile_data:
-            for key, value in profile_data.items():
-                setattr(request.user.profile, key, value)
-            request.user.profile.save()
-
-        # Handle profile picture last
-        try:
-            profile_picture = request.FILES.get('profile_picture')
-            if profile_picture:
-                # Delete old profile picture if it exists
-                if request.user.profile.profile_picture:
-                    request.user.profile.profile_picture.delete(save=False)
-                # Save new profile picture
-                request.user.profile.profile_picture = profile_picture
+            # Update profile data first
+            if profile_data:
+                for key, value in profile_data.items():
+                    setattr(request.user.profile, key, value)
                 request.user.profile.save()
-        except Exception as e:
-            # Log the error and return it to the client
-            error_msg = f"Error handling profile picture: {str(e)}"
-            return Response(
-                {'error': error_msg},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
-        # Handle user data
-        user_data = {}
-        for field in ['first_name', 'last_name', 'email']:
-            if field in request.data:
-                user_data[field] = request.data[field]
+            # Handle profile picture with better error handling
+            try:
+                profile_picture = request.FILES.get('profile_picture')
+                if profile_picture:
+                    # Delete old profile picture if it exists
+                    if request.user.profile.profile_picture:
+                        request.user.profile.profile_picture.delete(save=False)
+                    # Save new profile picture
+                    request.user.profile.profile_picture = profile_picture
+                    request.user.profile.save()
+                    logger.info(f"Profile picture updated for user: {request.user.email}")
+            except Exception as e:
+                # Log the error and return it to the client
+                error_msg = f"Error handling profile picture: {str(e)}"
+                logger.error(error_msg)
+                return Response(
+                    {'error': error_msg},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-        if user_data:
-            serializer = UserSerializer(request.user, data=user_data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # Handle user data
+            user_data = {}
+            for field in ['first_name', 'last_name', 'email']:
+                if field in request.data:
+                    user_data[field] = request.data[field]
 
-        # Return updated user data
-        serializer = UserSerializer(request.user, context={'request': request})
-        return Response(serializer.data)
+            if user_data:
+                serializer = UserSerializer(request.user, data=user_data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            # Return updated user data
+            serializer = UserSerializer(request.user, context={'request': request})
+            return Response(serializer.data)
     except Exception as e:
         return Response(
             {'error': str(e)},
