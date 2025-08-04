@@ -29,7 +29,6 @@ export const getImageUrl = (path: string, addTimestamp: boolean = false) => {
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
-    "Content-Type": "application/json",
     Accept: "application/json",
   },
   withCredentials: true, // Enable credentials for production
@@ -42,10 +41,13 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Only set content type to JSON if it's not already set (e.g., for file uploads)
-    if (!config.headers["Content-Type"]) {
+
+    // Only set content type to JSON if it's not FormData (for file uploads)
+    if (!(config.data instanceof FormData)) {
       config.headers["Content-Type"] = "application/json";
     }
+    // For FormData, let the browser set the Content-Type with boundary
+
     return config;
   },
   (error) => {

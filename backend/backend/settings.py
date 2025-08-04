@@ -19,11 +19,7 @@ from django.urls import reverse_lazy
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Import storage settings
-try:
-    from .storage import *
-except ImportError:
-    pass
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -166,13 +162,15 @@ try:
 except Exception as e:
     if DEBUG:
         # Fallback to SQLite in development
+        DATABASE_URL = config('DATABASE_URL')
         DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.sqlite3',
-                'NAME': BASE_DIR / 'db.sqlite3',
-            }
+            "default": dj_database_url.config(
+                default=DATABASE_URL,
+                ssl_require=not DEBUG,  # Require SSL in production only
+                conn_max_age=600,  # Connection pooling
+                conn_health_checks=True,  # Health checks
+            )
         }
-    else:
         raise Exception(f"DATABASE_URL configuration error: {e}")
 
 
@@ -226,15 +224,65 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
 FILE_UPLOAD_PERMISSIONS = 0o644
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o755
 
-# Media files configuration will be handled by storage.py
-MEDIA_URL = '/media/'  # This will be overridden by storage.py if using S3
-MEDIA_ROOT = BASE_DIR / 'media'  # This will be overridden by storage.py if using S3
-
-# Import storage settings after setting defaults
+# Import storage configuration first
 try:
     from .storage import *
-except ImportError:
+    
+    # S3 configuration loaded successfully
+    
+except ImportError as e:
+    print(f"DEBUG: Storage import failed: {e}")
     pass
+
+# Django 4.2+ STORAGES Configuration
+try:
+    if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME]):
+
+        # Use S3 for media storage
+        STORAGES = {
+            "default": {
+                "BACKEND": "backend.storage.MediaStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            },
+        }
+        MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Django Settings: Using S3 for media storage: {AWS_S3_CUSTOM_DOMAIN}")
+    else:
+
+        # Use local storage for media
+        STORAGES = {
+            "default": {
+                "BACKEND": "django.core.files.storage.FileSystemStorage",
+            },
+            "staticfiles": {
+                "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+            },
+        }
+        MEDIA_URL = '/media/'
+        MEDIA_ROOT = BASE_DIR / 'media'
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning("Django Settings: Using local storage for media files - S3 configuration incomplete")
+        
+except NameError as e:
+
+    # Fallback to local storage if AWS variables are not defined
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = False

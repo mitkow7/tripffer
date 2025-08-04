@@ -448,11 +448,6 @@ export function useUpdateProfile() {
         Object.entries(data).forEach(([key, value]) => {
           if (value !== undefined) {
             if (key === "profile_picture" && value instanceof File) {
-              console.log(
-                "Adding profile picture to FormData:",
-                value.name,
-                value.size
-              );
               formData.append(key, value);
             } else if (typeof value === "string") {
               formData.append(key, value);
@@ -460,7 +455,6 @@ export function useUpdateProfile() {
           }
         });
 
-        console.log("FormData entries:", Array.from(formData.entries()));
         const response = await api.put("/accounts/profile/", formData, {
           headers: {
             // Don't set Content-Type manually for FormData - let browser set it with boundary
@@ -476,9 +470,7 @@ export function useUpdateProfile() {
       }
     },
     onSuccess: () => {
-      console.log("Profile update successful, invalidating cache");
       queryClient.invalidateQueries({ queryKey: ["user"] });
-      // Also force a refetch of the current user data
       queryClient.refetchQueries({ queryKey: ["user"] });
     },
   });

@@ -272,25 +272,8 @@ def user_profile(request):
                     setattr(request.user.profile, key, value)
                 request.user.profile.save()
 
-            # Handle profile picture with better error handling
-            try:
-                profile_picture = request.FILES.get('profile_picture')
-                if profile_picture:
-                    # Delete old profile picture if it exists
-                    if request.user.profile.profile_picture:
-                        request.user.profile.profile_picture.delete(save=False)
-                    # Save new profile picture
-                    request.user.profile.profile_picture = profile_picture
-                    request.user.profile.save()
-                    logger.info(f"Profile picture updated for user: {request.user.email}")
-            except Exception as e:
-                # Log the error and return it to the client
-                error_msg = f"Error handling profile picture: {str(e)}"
-                logger.error(error_msg)
-                return Response(
-                    {'error': error_msg},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+            # Handle profile picture upload
+            _handle_profile_picture_upload(request)
 
             # Handle user data
             user_data = {}
@@ -308,11 +291,37 @@ def user_profile(request):
             # Return updated user data
             serializer = UserSerializer(request.user, context={'request': request})
             return Response(serializer.data)
+            
     except Exception as e:
+        logger.error(f"Profile update failed for user {request.user.email}: {str(e)}")
         return Response(
             {'error': str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+def _handle_profile_picture_upload(request):
+    """Handle profile picture upload with proper error handling"""
+    try:
+        profile_picture = request.FILES.get('profile_picture')
+        if not profile_picture:
+            return
+
+        logger.info(f"Uploading profile picture for user: {request.user.email}")
+        
+        # Delete old profile picture if it exists
+        if request.user.profile.profile_picture:
+            request.user.profile.profile_picture.delete(save=False)
+        
+        # Save new profile picture
+        request.user.profile.profile_picture = profile_picture
+        request.user.profile.save()
+        
+        logger.info(f"Profile picture uploaded successfully: {request.user.profile.profile_picture.url}")
+        
+    except Exception as e:
+        logger.error(f"Profile picture upload failed for user {request.user.email}: {str(e)}")
+        raise
 
 
 class DeleteAccountView(APIView):

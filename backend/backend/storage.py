@@ -9,7 +9,7 @@ AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1').split('#
 
 # Basic S3 Settings
 AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = 'public-read'  # Allow public read access to files
+AWS_DEFAULT_ACL = None  # Don't use ACLs, rely on bucket policy
 AWS_QUERYSTRING_AUTH = False  # Don't add query string auth
 AWS_S3_USE_SSL = True
 AWS_S3_VERIFY = True
@@ -31,7 +31,7 @@ else:
 class MediaStorage(S3Boto3Storage):
     location = 'media'
     file_overwrite = False
-    default_acl = 'public-read'
+    default_acl = None  # Don't set ACL, rely on bucket policy for public access
     querystring_auth = False
     custom_domain = AWS_S3_CUSTOM_DOMAIN if AWS_S3_CUSTOM_DOMAIN else None
     
@@ -41,23 +41,4 @@ class MediaStorage(S3Boto3Storage):
     def get_created_time(self, name):
         return None
 
-# Media files configuration
-if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME, AWS_S3_REGION_NAME]):
-    # Use S3 for media storage
-    DEFAULT_FILE_STORAGE = 'backend.storage.MediaStorage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
-    
-    # Log S3 configuration for debugging
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Using S3 for media storage: {AWS_S3_CUSTOM_DOMAIN}")
-else:
-    # Use local storage for media
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = 'media'
-    
-    # Log local storage configuration
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.warning("Using local storage for media files - S3 configuration incomplete")
+# Note: STORAGES configuration is now handled in settings.py for Django 4.2+ compatibility
