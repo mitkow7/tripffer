@@ -143,12 +143,33 @@ AUTHENTICATION_BACKENDS = [
 # Parse database URL for production
 import dj_database_url
 
-DATABASES = {
-    "default": dj_database_url.config(
-        default=config('DATABASE_URL'),
-        ssl_require=True,  # Always require SSL for Supabase
-    )
-}
+# Try to parse DATABASE_URL, fallback to SQLite in development
+try:
+    DATABASE_URL = config('DATABASE_URL')
+    DATABASES = {
+        "default": dj_database_url.config(
+            default=DATABASE_URL,
+            ssl_require=not DEBUG,  # Require SSL in production only
+            conn_max_age=600,  # Connection pooling
+            conn_health_checks=True,  # Health checks
+            options={
+                'connect_timeout': 10,
+                'application_name': 'tripffer_backend',
+                'sslmode': 'require' if not DEBUG else 'prefer',
+            } if not DEBUG else {}
+        )
+    }
+except Exception as e:
+    if DEBUG:
+        # Fallback to SQLite in development
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
+    else:
+        raise Exception(f"DATABASE_URL configuration error: {e}")
 
 
 # Password validation
@@ -395,6 +416,10 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'ERROR',
         },
         'accounts': {
             'handlers': ['console'],
