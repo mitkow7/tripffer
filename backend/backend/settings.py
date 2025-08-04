@@ -147,8 +147,8 @@ DATABASES = {
     "default": dj_database_url.config(
         default=config('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=not DEBUG,  # Only require SSL in production
-        engine='django.db.backends.postgresql'
+        engine='django.db.backends.postgresql',
+        ssl_require=True,  # Always require SSL for Supabase
     )
 }
 
@@ -163,11 +163,9 @@ if not DEBUG:
             'keepalives_interval': 10,
             'keepalives_count': 5,
             'target_session_attrs': 'read-write',
-            'options': '-c search_path=public'
-        },
-        'HOST': 'db.zegrsessubhjhvrcerct.supabase.co',
-        'PORT': '5432',
-        'ENGINE': 'django.db.backends.postgresql'
+            'options': '-c search_path=public',
+            'address_family': 'ipv4'  # Force IPv4
+        }
     })
 
 
