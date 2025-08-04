@@ -221,6 +221,17 @@ def user_profile(request):
             return Response(serializer.data)
         
         elif request.method == 'PUT':
+            # Ensure user has a profile
+            if not hasattr(request.user, 'profile'):
+                UserProfile.objects.create(user=request.user)
+                request.user.refresh_from_db()
+            
+            serializer = UserSerializer(request.user, data=request.data, partial=True)
+    except Exception as e:
+        return Response(
+            {'error': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
         # Ensure user has a profile
         if not hasattr(request.user, 'profile'):
             UserProfile.objects.create(user=request.user)
