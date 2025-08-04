@@ -146,27 +146,9 @@ import dj_database_url
 DATABASES = {
     "default": dj_database_url.config(
         default=config('DATABASE_URL'),
-        conn_max_age=600,
-        engine='django.db.backends.postgresql',
         ssl_require=True,  # Always require SSL for Supabase
     )
 }
-
-# Update database options based on environment
-if not DEBUG:
-    DATABASES['default'].update({
-        'OPTIONS': {
-            'sslmode': 'require',
-            'connect_timeout': 30,
-            'keepalives': 1,
-            'keepalives_idle': 30,
-            'keepalives_interval': 10,
-            'keepalives_count': 5,
-            'target_session_attrs': 'read-write',
-            'options': '-c search_path=public',
-            'address_family': 'ipv4'  # Force IPv4
-        }
-    })
 
 
 # Password validation
