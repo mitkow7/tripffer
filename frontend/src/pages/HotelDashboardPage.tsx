@@ -4,7 +4,7 @@ import {
   useHotelBookings,
   useUpdateBookingStatus,
 } from "../hooks/useApi";
-import { BACKEND_URL } from "../config/api";
+import { BACKEND_URL, getImageUrl } from "../config/api";
 import {
   MapPin,
   Globe,
@@ -151,7 +151,7 @@ const HotelDashboardPage: React.FC = () => {
             <div className="w-full md:w-1/3">
               {selectedImage ? (
                 <img
-                  src={`${BACKEND_URL}${selectedImage}`}
+                  src={getImageUrl(selectedImage)}
                   alt={hotel.name}
                   className="w-full h-48 rounded-lg object-cover"
                 />
@@ -164,7 +164,7 @@ const HotelDashboardPage: React.FC = () => {
                 {hotel.images?.map((image: any) => (
                   <img
                     key={image.id}
-                    src={`${BACKEND_URL}${image.image}`}
+                    src={getImageUrl(image.image)}
                     alt={hotel.name}
                     className={`w-16 h-16 rounded-lg object-cover cursor-pointer ${
                       selectedImage === image.image

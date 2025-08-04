@@ -13,6 +13,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { useCurrentUser, useUserBookings, useFavorites } from "../hooks/useApi";
+import { getImageUrl } from "../config/api";
 
 interface Booking {
   id: number;
@@ -102,9 +103,9 @@ const DashboardPage: React.FC = () => {
           </div>
           <div className="flex items-center">
             <Link to="/settings" className="mr-4">
-              {user?.profile_picture ? (
+              {user?.profile?.profile_picture ? (
                 <img
-                  src={user.profile_picture}
+                  src={getImageUrl(user.profile.profile_picture)}
                   alt="Profile"
                   className="w-12 h-12 rounded-full object-cover shadow-sm"
                 />
