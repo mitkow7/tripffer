@@ -8,4 +8,10 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
     """
     Signal to automatically create or update user profile
     """
-    UserProfile.objects.get_or_create(user=instance)
+    try:
+        if not hasattr(instance, 'profile'):
+            UserProfile.objects.create(user=instance)
+    except Exception as e:
+        # Log the error but don't prevent user creation
+        print(f"Error creating user profile: {str(e)}")
+        pass

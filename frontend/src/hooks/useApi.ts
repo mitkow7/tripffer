@@ -1,6 +1,6 @@
 import React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "../config/api";
+import api, { BACKEND_URL } from "../config/api";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -149,7 +149,6 @@ export function useCurrentUser() {
         const response = await api.get("/accounts/profile/");
         return response.data;
       } catch (error) {
-        console.error("Failed to fetch user profile:", error);
         throw error;
       }
     },
@@ -178,7 +177,6 @@ export function useMyHotel() {
         const response = await api.get("/hotels/my-hotel/");
         return response.data;
       } catch (error: unknown) {
-        console.error("Failed to fetch hotel data:", error);
         throw error;
       }
     },
@@ -320,7 +318,6 @@ export function useToggleFavorite() {
         await createMutation.mutateAsync(hotelId);
       }
     } catch (error) {
-      console.error("Failed to toggle favorite:", error);
       throw error;
     }
   };

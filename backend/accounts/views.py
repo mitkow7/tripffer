@@ -12,6 +12,10 @@ from hotels.models import Hotel, HotelImage
 from django.db import transaction
 from rest_framework import serializers
 from .utils import send_welcome_email
+from django.contrib.auth import get_user_model
+
+
+UserModel = get_user_model()
 
 
 class RegisterView(APIView):
@@ -23,15 +27,25 @@ class RegisterView(APIView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
-        # Create a mutable copy of the data
-        data = request.data.copy()
-        
-        # Extract hotel data if present
-        hotel_data = data.pop('hotel', None)
-        
-        serializer = RegisterSerializer(data=data)
-        if serializer.is_valid():
-            user = serializer.save()
+        try:
+            # Create a mutable copy of the data
+            data = request.data.copy()
+            
+            # Extract hotel data if present
+            hotel_data = data.pop('hotel', None)
+            
+            # Validate registration data
+            serializer = RegisterSerializer(data=data)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                user = serializer.save()
+            except Exception as user_error:
+                return Response({
+                    'error': 'Failed to create user',
+                    'detail': str(user_error)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Create hotel if user role is HOTEL and hotel data is provided
             if user.role == 'HOTEL' and hotel_data:
@@ -48,27 +62,38 @@ class RegisterView(APIView):
                     if 'amenities' in hotel_data:
                         hotel.amenities = hotel_data['amenities']
                         hotel.save()
-                except Exception as e:
+                except Exception as hotel_error:
                     # If hotel creation fails, rollback the transaction
-                    raise serializers.ValidationError({
-                        'hotel': str(e)
-                    })
+                    return Response({
+                        'error': 'Failed to create hotel',
+                        'detail': str(hotel_error)
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
             # Send welcome email
             try:
                 send_welcome_email(user)
-            except Exception as e:
-                # Log the error but don't fail registration
+            except Exception:
                 # Silently continue if welcome email fails
                 pass
             
-            refresh = RefreshToken.for_user(user)
+            try:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'user': UserSerializer(user).data,
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }, status=status.HTTP_201_CREATED)
+            except Exception as token_error:
+                return Response({
+                    'error': 'Failed to generate authentication tokens',
+                    'detail': str(token_error)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except Exception as e:
             return Response({
-                'user': UserSerializer(user).data,
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'Registration failed',
+                'detail': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 class LoginView(APIView):
@@ -85,6 +110,7 @@ class LoginView(APIView):
             if 'HTTP_AUTHORIZATION' in request.META:
                 del request.META['HTTP_AUTHORIZATION']
             
+            # Validate request data
             serializer = self.serializer_class(data=request.data)
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -92,27 +118,43 @@ class LoginView(APIView):
             email = serializer.validated_data['email']
             password = serializer.validated_data['password']
             
+            # Check if user exists
             try:
-                user = authenticate(request=request, email=email, password=password)
+                user = UserModel.objects.get(email=email)
+            except UserModel.DoesNotExist:
+                return Response(
+                    {'error': 'No user found with this email'},
+                    status=status.HTTP_401_UNAUTHORIZED
+                )
+            except Exception as e:
+                return Response(
+                    {'error': 'Database error', 'detail': str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Try to authenticate
+            try:
+                authenticated_user = authenticate(request=request, email=email, password=password)
+                if authenticated_user is None:
+                    return Response(
+                        {'error': 'Invalid password'},
+                        status=status.HTTP_401_UNAUTHORIZED
+                    )
             except Exception as auth_error:
                 return Response(
                     {'error': 'Authentication failed', 'detail': str(auth_error)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
             
-            if not user:
-                return Response(
-                    {'error': 'Email or password is incorrect'},
-                    status=status.HTTP_401_UNAUTHORIZED
-                )
-            
+            # Generate tokens
             try:
-                refresh = RefreshToken.for_user(user)
-                return Response({
+                refresh = RefreshToken.for_user(authenticated_user)
+                response_data = {
                     'access': str(refresh.access_token),
                     'refresh': str(refresh),
-                    'user': UserSerializer(user).data
-                })
+                    'user': UserSerializer(authenticated_user).data
+                }
+                return Response(response_data)
             except Exception as token_error:
                 return Response(
                     {'error': 'Failed to generate tokens', 'detail': str(token_error)},

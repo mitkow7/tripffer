@@ -43,8 +43,8 @@ class HotelViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = Hotel.objects.all()
 
         # Display only approved hotels to non-admin users
-        user = self.request.user
-        if not user.is_authenticated or not user.is_staff:
+        user = getattr(self.request, 'user', None)
+        if not user or not getattr(user, 'is_staff', False):
             queryset = queryset.filter(is_approved=True)
 
         # Filter by city first (if provided)
@@ -184,13 +184,14 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Booking.objects.all()
-        if self.request.user.is_authenticated:
-            if hasattr(self.request.user, 'hotel'):
+        user = getattr(self.request, 'user', None)
+        if user and getattr(user, 'is_authenticated', False):
+            if hasattr(user, 'hotel'):
                 # If user is a hotel owner, return bookings for their hotel
-                rooms = self.request.user.hotel.rooms.all()
+                rooms = user.hotel.rooms.all()
                 return queryset.filter(room__in=rooms)
             # If user is a regular user, return their bookings
-            return queryset.filter(user=self.request.user)
+            return queryset.filter(user=user)
         return Booking.objects.none()
 
     def perform_create(self, serializer):
@@ -308,8 +309,8 @@ class RoomViewSet(viewsets.ModelViewSet):
         This view should return a list of all the rooms
         for the currently authenticated user's hotel.
         """
-        user = self.request.user
-        if hasattr(user, 'hotel'):
+        user = getattr(self.request, 'user', None)
+        if user and hasattr(user, 'hotel'):
             return Room.objects.filter(hotel=user.hotel)
         return Room.objects.none()
 
