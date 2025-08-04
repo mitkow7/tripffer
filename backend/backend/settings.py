@@ -152,13 +152,17 @@ try:
             ssl_require=not DEBUG,  # Require SSL in production only
             conn_max_age=600,  # Connection pooling
             conn_health_checks=True,  # Health checks
-            options={
-                'connect_timeout': 10,
-                'application_name': 'tripffer_backend',
-                'sslmode': 'require' if not DEBUG else 'prefer',
-            } if not DEBUG else {}
         )
     }
+    
+    # Add PostgreSQL-specific options for production
+    if not DEBUG and 'postgresql' in DATABASE_URL:
+        DATABASES['default']['OPTIONS'] = {
+            'connect_timeout': 10,
+            'application_name': 'tripffer_backend',
+            'sslmode': 'require',
+        }
+        
 except Exception as e:
     if DEBUG:
         # Fallback to SQLite in development
