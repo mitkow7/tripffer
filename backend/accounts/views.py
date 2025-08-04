@@ -13,6 +13,9 @@ from django.db import transaction
 from rest_framework import serializers
 from .utils import send_welcome_email
 from django.contrib.auth import get_user_model
+import logging
+
+logger = logging.getLogger('accounts')
 
 
 UserModel = get_user_model()
@@ -134,23 +137,31 @@ class LoginView(APIView):
 
             # Try to authenticate
             try:
+                logger.info(f"Login attempt for email: {email}")
                 authenticated_user = authenticate(
                     request=request,
                     username=email,  # Django might use username internally
                     email=email,
                     password=password
                 )
+                logger.info(f"Authentication result for {email}: {'success' if authenticated_user else 'failed'}")
+                
                 if authenticated_user is None:
+                    # Check if password is correct
+                    if user.check_password(password):
+                        logger.error(f"Password correct but authentication failed for {email}")
                     return Response(
                         {'error': 'Invalid email or password'},
                         status=status.HTTP_401_UNAUTHORIZED
                     )
                 if not authenticated_user.is_active:
+                    logger.warning(f"Login attempt by inactive user: {email}")
                     return Response(
                         {'error': 'This account is inactive'},
                         status=status.HTTP_401_UNAUTHORIZED
                     )
             except Exception as auth_error:
+                print(f"Authentication error: {str(auth_error)}")  # Debug log
                 return Response(
                     {'error': 'Authentication failed', 'detail': str(auth_error)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -158,14 +169,17 @@ class LoginView(APIView):
             
             # Generate tokens
             try:
+                logger.info(f"Creating/verifying profile for user: {authenticated_user.email}")
                 # Ensure user has a profile before serializing
                 if not hasattr(authenticated_user, 'profile'):
                     UserProfile.objects.create(user=authenticated_user)
                     authenticated_user.refresh_from_db()
 
+                logger.info(f"Generating tokens for user: {authenticated_user.email}")
                 # Generate tokens
                 refresh = RefreshToken.for_user(authenticated_user)
                 
+                logger.info(f"Serializing user data for: {authenticated_user.email}")
                 # Serialize user data
                 user_data = UserSerializer(authenticated_user).data
                 
@@ -174,8 +188,10 @@ class LoginView(APIView):
                     'refresh': str(refresh),
                     'user': user_data
                 }
+                logger.info(f"Login successful for user: {authenticated_user.email}")
                 return Response(response_data)
             except Exception as token_error:
+                logger.error(f"Token/serialization error for {authenticated_user.email}: {str(token_error)}")
                 return Response(
                     {'error': 'Failed to generate tokens', 'detail': str(token_error)},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
