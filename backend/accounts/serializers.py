@@ -71,8 +71,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
-        # Use email as username
-        validated_data['username'] = validated_data['email']
+        # AppUserManager will handle username assignment automatically
         user = User.objects.create_user(**validated_data)
         return user
 
