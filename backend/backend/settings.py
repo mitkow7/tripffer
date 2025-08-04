@@ -155,8 +155,18 @@ DATABASES = {
 # Update database options based on environment
 if not DEBUG:
     DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require'
+        'sslmode': 'require',
+        'connect_timeout': 30,
+        'keepalives': 1,
+        'keepalives_idle': 30,
+        'keepalives_interval': 10,
+        'keepalives_count': 5,
+        'target_session_attrs': 'read-write',
+        'options': '-c search_path=public'
     }
+    # Force IPv4
+    import socket
+    DATABASES['default']['HOST'] = socket.gethostbyname('db.zegrsessubhjhvrcerct.supabase.co')
 
 
 # Password validation
