@@ -139,7 +139,7 @@ DATABASES = {
     "default": dj_database_url.config(
         default=config('DATABASE_URL'),
         conn_max_age=600,
-        conn_health_checks=True,
+        ssl_require=True,
     )
 }
 
@@ -203,6 +203,7 @@ except ImportError:
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://tripffer.vercel.app',
+    'http://localhost:5173',
 ]
 
 # Additional CORS settings

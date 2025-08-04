@@ -2,8 +2,15 @@ import axios from "axios";
 
 // In production, always use the production URL
 const isProduction = import.meta.env.PROD;
-export const BACKEND_URL = "https://tripffer-backend.onrender.com";
-export const MEDIA_URL = import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com";
+// Use localhost in development, production URL otherwise
+export const BACKEND_URL = import.meta.env.DEV 
+  ? "http://localhost:8000"
+  : "https://tripffer-backend.onrender.com";
+
+// Use localhost for media in development, S3 in production
+export const MEDIA_URL = import.meta.env.DEV
+  ? "http://localhost:8000"
+  : (import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com");
 
 export const getImageUrl = (path: string) => {
   if (!path) return '';
