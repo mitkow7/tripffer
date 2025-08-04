@@ -3,20 +3,21 @@ import axios from "axios";
 // In production, always use the production URL
 const isProduction = import.meta.env.PROD;
 // Use localhost in development, production URL otherwise
-export const BACKEND_URL = import.meta.env.DEV 
+export const BACKEND_URL = import.meta.env.DEV
   ? "http://localhost:8000"
   : "https://tripffer-backend.onrender.com";
 
 // Use localhost for media in development, S3 in production
 export const MEDIA_URL = import.meta.env.DEV
   ? "http://localhost:8000"
-  : (import.meta.env.VITE_MEDIA_URL || "https://tripffer.s3.eu-north-1.amazonaws.com");
+  : import.meta.env.VITE_MEDIA_URL ||
+    "https://tripffer.s3.eu-north-1.amazonaws.com";
 
 export const getImageUrl = (path: string) => {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
   // Remove any leading slashes and media prefix
-  const cleanPath = path.replace(/^\//, '').replace(/^media\//, '');
+  const cleanPath = path.replace(/^\//, "").replace(/^media\//, "");
   return `${MEDIA_URL}/${cleanPath}`;
 };
 
@@ -24,7 +25,7 @@ const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
   headers: {
     "Content-Type": "application/json",
-    "Accept": "application/json",
+    Accept: "application/json",
   },
   withCredentials: true, // Enable credentials for production
 });
@@ -36,9 +37,12 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Ensure content type is set for all requests
+    config.headers["Content-Type"] = "application/json";
     return config;
   },
   (error) => {
+    console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
@@ -46,16 +50,25 @@ api.interceptors.request.use(
 // Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response) {
       // Server responded with error status
-      console.error('Response error:', error.response.data);
+      console.error("Response error:", error.response.data);
+
+      // Handle 401 Unauthorized
+      if (error.response.status === 401) {
+        // Clear tokens on auth error
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        // Redirect to login
+        window.location.href = "/login";
+      }
     } else if (error.request) {
       // Request was made but no response
-      console.error('Request error:', error.request);
+      console.error("Request error:", error.request);
     } else {
       // Something else happened
-      console.error('Error:', error.message);
+      console.error("Error:", error.message);
     }
     return Promise.reject(error);
   }
