@@ -9,7 +9,7 @@ AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='eu-north-1').split('#
 
 # Basic S3 Settings
 AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = 'public-read'
+AWS_DEFAULT_ACL = None  # Disable ACL since bucket doesn't support it
 AWS_QUERYSTRING_AUTH = False
 AWS_S3_USE_SSL = True
 
@@ -20,7 +20,7 @@ AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazo
 class MediaStorage(S3Boto3Storage):
     location = 'media'
     file_overwrite = False
-    default_acl = 'public-read'
+    default_acl = None  # Disable ACL for this storage class too
     querystring_auth = False
     custom_domain = AWS_S3_CUSTOM_DOMAIN
 
