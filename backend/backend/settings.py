@@ -204,7 +204,12 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://tripffer.vercel.app',
     'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:8000',
 ]
+
+# Allow credentials
+CORS_ALLOW_CREDENTIALS = True
 
 # Additional CORS settings
 CORS_ALLOW_CREDENTIALS = True

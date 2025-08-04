@@ -7,9 +7,11 @@ def send_welcome_email(user):
     """
     Send a welcome email to newly registered users.
     """
+    # Use production URL if not in debug mode
+    site_url = 'https://tripffer.vercel.app' if not settings.DEBUG else 'http://localhost:5173'
     context = {
         'user': user,
-        'site_url': 'http://localhost:5173'  # Change this in production
+        'site_url': site_url
     }
     
     # Render HTML content

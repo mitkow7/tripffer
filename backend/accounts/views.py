@@ -54,7 +54,12 @@ class RegisterView(APIView):
                     })
             
             # Send welcome email
-            send_welcome_email(user)
+            try:
+                send_welcome_email(user)
+            except Exception as e:
+                # Log the error but don't fail registration
+                print(f"Failed to send welcome email: {str(e)}")
+                # You might want to add proper logging here in production
             
             refresh = RefreshToken.for_user(user)
             return Response({
