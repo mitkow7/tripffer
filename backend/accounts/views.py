@@ -75,34 +75,53 @@ class LoginView(APIView):
     """
     View to handle user login.
     """
+    authentication_classes = []  # No authentication needed for login
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 
     def post(self, request):
         try:
+            # Remove any existing auth headers to prevent interference
+            if 'HTTP_AUTHORIZATION' in request.META:
+                del request.META['HTTP_AUTHORIZATION']
+            
             serializer = self.serializer_class(data=request.data)
-            if serializer.is_valid():
-                email = serializer.validated_data['email']
-                password = serializer.validated_data['password']
-                user = authenticate(email=email, password=password)
-                
-                if user:
-                    refresh = RefreshToken.for_user(user)
-                    return Response({
-                        'access': str(refresh.access_token),
-                        'refresh': str(refresh),
-                        'user': UserSerializer(user).data
-                    })
-                
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+            email = serializer.validated_data['email']
+            password = serializer.validated_data['password']
+            
+            try:
+                user = authenticate(request=request, email=email, password=password)
+            except Exception as auth_error:
+                return Response(
+                    {'error': 'Authentication failed', 'detail': str(auth_error)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            if not user:
                 return Response(
                     {'error': 'Email or password is incorrect'},
                     status=status.HTTP_401_UNAUTHORIZED
                 )
             
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                    'user': UserSerializer(user).data
+                })
+            except Exception as token_error:
+                return Response(
+                    {'error': 'Failed to generate tokens', 'detail': str(token_error)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
         except Exception as e:
             return Response(
-                {'error': str(e)},
+                {'error': 'Login failed', 'detail': str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

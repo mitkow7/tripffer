@@ -83,7 +83,17 @@ export const useLogin = () => {
       password: string;
       remember_me?: boolean;
     }) => {
-      const response = await api.post<LoginResponse>("/accounts/login/", data);
+      // Create a new axios instance without auth headers for login
+      const response = await axios.post<LoginResponse>(
+        `${BACKEND_URL}/api/accounts/login/`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
       return response.data;
     },
     onSuccess: (data) => {
