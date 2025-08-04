@@ -18,7 +18,8 @@ class RegisterView(APIView):
     """
     View to handle user registration.
     """
-    permission_classes = [AllowAny]
+    authentication_classes = []  # No authentication needed for registration
+    permission_classes = [AllowAny]  # Allow any user to register
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -58,8 +59,8 @@ class RegisterView(APIView):
                 send_welcome_email(user)
             except Exception as e:
                 # Log the error but don't fail registration
-                print(f"Failed to send welcome email: {str(e)}")
-                # You might want to add proper logging here in production
+                # Silently continue if welcome email fails
+                pass
             
             refresh = RefreshToken.for_user(user)
             return Response({
@@ -180,7 +181,6 @@ def user_profile(request):
         except Exception as e:
             # Log the error and return it to the client
             error_msg = f"Error handling profile picture: {str(e)}"
-            print(error_msg)
             return Response(
                 {'error': error_msg},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

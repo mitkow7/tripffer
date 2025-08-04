@@ -114,9 +114,14 @@ export function useRegister() {
         return response.data;
       } catch (error: any) {
         if (error.response?.data) {
+          if (error.response.status === 401) {
+            throw new Error(
+              "Registration endpoint is not accessible. Please try again."
+            );
+          }
           throw new Error(JSON.stringify(error.response.data));
         }
-        throw error;
+        throw new Error("Registration failed. Please try again later.");
       } finally {
         setIsPending(false);
       }
@@ -363,11 +368,6 @@ export function useSubmitReview() {
       comment: string;
     }) => {
       try {
-        console.log("Submitting review with data:", {
-          hotel: hotelId,
-          rating,
-          comment,
-        });
         const response = await api.post("/hotels/reviews/", {
           hotel: Number(hotelId),
           rating: Number(rating),
@@ -375,11 +375,6 @@ export function useSubmitReview() {
         });
         return response.data;
       } catch (error: any) {
-        console.error("Review submission error details:", {
-          error: error.response?.data || error,
-          status: error.response?.status,
-          requestData: error.config?.data,
-        });
         // Throw a more informative error
         throw new Error(
           error.response?.data?.detail ||
@@ -480,23 +475,29 @@ export function useUpdateHotel() {
     mutationFn: async (data: any) => {
       try {
         const formData = new FormData();
-        
+
         // Add hotel fields to FormData
-        formData.append('name', data.hotel_name || '');
-        formData.append('address', data.hotel_address || '');
-        formData.append('website', data.hotel_website || '');
-        formData.append('contact_email', data.hotel_contact_email || '');
-        formData.append('contact_phone', data.hotel_contact_phone || '');
-        formData.append('price_per_night', data.hotel_price_per_night || '');
-        formData.append('availability_start_date', data.hotel_availability_start_date || '');
-        formData.append('availability_end_date', data.hotel_availability_end_date || '');
-        formData.append('features', data.hotel_features || '');
-        formData.append('description', data.hotel_description || '');
+        formData.append("name", data.hotel_name || "");
+        formData.append("address", data.hotel_address || "");
+        formData.append("website", data.hotel_website || "");
+        formData.append("contact_email", data.hotel_contact_email || "");
+        formData.append("contact_phone", data.hotel_contact_phone || "");
+        formData.append("price_per_night", data.hotel_price_per_night || "");
+        formData.append(
+          "availability_start_date",
+          data.hotel_availability_start_date || ""
+        );
+        formData.append(
+          "availability_end_date",
+          data.hotel_availability_end_date || ""
+        );
+        formData.append("features", data.hotel_features || "");
+        formData.append("description", data.hotel_description || "");
 
         // Add images if they exist
         if (data.hotel_images && data.hotel_images.length > 0) {
           data.hotel_images.forEach((image: File, index: number) => {
-            formData.append('images', image);
+            formData.append("images", image);
           });
         }
 
@@ -505,7 +506,7 @@ export function useUpdateHotel() {
           formData,
           {
             headers: {
-              'Content-Type': 'multipart/form-data',
+              "Content-Type": "multipart/form-data",
             },
           }
         );
@@ -530,30 +531,33 @@ export function useDeleteAccount() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await fetch('http://localhost:8000/api/accounts/delete/', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        },
-      });
+      const response = await fetch(
+        "http://localhost:8000/api/accounts/delete/",
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || 'Failed to delete account');
+        throw new Error(error.message || "Failed to delete account");
       }
 
       // Clear all auth tokens
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+
       // Clear all queries
       queryClient.clear();
-      
+
       return response.json();
     },
     onSuccess: () => {
       // Redirect to home page after successful deletion
-      navigate('/');
+      navigate("/");
     },
   });
 }

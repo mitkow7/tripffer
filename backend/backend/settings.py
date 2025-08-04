@@ -70,11 +70,12 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
+        'rest_framework.permissions.IsAuthenticated',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'UNAUTHENTICATED_USER': None,
 }
 
 # JWT Settings
@@ -203,6 +204,7 @@ except ImportError:
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://tripffer.vercel.app',
+    'https://tripffer-backend.onrender.com',
     'http://localhost:5173',
     'http://localhost:3000',
     'http://localhost:8000',
@@ -238,6 +240,7 @@ CORS_ALLOW_HEADERS = [
 # Security settings
 CSRF_TRUSTED_ORIGINS = [
     'https://tripffer.vercel.app',
+    'https://tripffer-backend.onrender.com',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
