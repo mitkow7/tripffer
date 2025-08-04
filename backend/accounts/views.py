@@ -166,11 +166,20 @@ def user_profile(request):
         try:
             profile_picture = request.FILES.get('profile_picture')
             if profile_picture:
+                # Delete old profile picture if it exists
+                if request.user.profile.profile_picture:
+                    request.user.profile.profile_picture.delete(save=False)
+                # Save new profile picture
                 request.user.profile.profile_picture = profile_picture
                 request.user.profile.save()
         except Exception as e:
-            # Log the error but don't fail the whole request
-            print(f"Error handling profile picture: {str(e)}")
+            # Log the error and return it to the client
+            error_msg = f"Error handling profile picture: {str(e)}"
+            print(error_msg)
+            return Response(
+                {'error': error_msg},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         # Handle user data
         user_data = {}

@@ -4,7 +4,7 @@ import Input from "./ui/Input";
 import ProfilePicture from "./ui/ProfilePicture";
 import { Mail, Phone, Calendar, User } from "lucide-react";
 import { useUpdateProfile } from "../hooks/useApi";
-import { BACKEND_URL } from "../config/api";
+import { getImageUrl } from "../config/api";
 
 interface UserProfileSettingsProps {
   user: any;
@@ -26,7 +26,7 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
 
   // Construct the full URL for the profile picture
   const profilePictureUrl = user?.profile?.profile_picture
-    ? `${BACKEND_URL}${user.profile.profile_picture}`
+    ? getImageUrl(user.profile.profile_picture)
     : undefined;
 
   return (
@@ -36,7 +36,6 @@ const UserProfileSettings: React.FC<UserProfileSettingsProps> = ({
           currentImage={profilePictureUrl}
           onImageChange={(file) => {
             onImageChange(file);
-            updateProfile.mutate({ profile_picture: file });
           }}
           size="lg"
           editable={true}

@@ -16,20 +16,13 @@ AWS_S3_USE_SSL = True
 # Generate custom domain for S3
 AWS_S3_CUSTOM_DOMAIN = f"{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com"
 
-# Media files configuration
-if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
-    # Use S3 for media storage
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
-    MEDIA_ROOT = ''
-else:
-    # Use local storage for media
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = 'media'
+# S3 Storage Class
 class MediaStorage(S3Boto3Storage):
     location = 'media'
     file_overwrite = False
+    default_acl = 'public-read'
+    querystring_auth = False
+    custom_domain = AWS_S3_CUSTOM_DOMAIN
 
 # Media files configuration
 if all([AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_STORAGE_BUCKET_NAME]):
@@ -40,3 +33,4 @@ else:
     # Use local storage for media
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     MEDIA_URL = '/media/'
+    MEDIA_ROOT = 'media'
