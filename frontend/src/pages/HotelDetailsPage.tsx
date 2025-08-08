@@ -27,7 +27,7 @@ import {
   useHotelDetails,
   useCurrentUser,
 } from "../hooks/useApi";
-import { BACKEND_URL } from "../config/api";
+import { getImageUrl } from "../config/api";
 import Carousel from "../components/ui/Carousel";
 import ReviewSection from "../features/reviews/ReviewSection";
 import ImageGrid from "../components/features/ImageGrid";
@@ -54,7 +54,9 @@ const HotelDetailsPage = () => {
   const toggleFavorite = useToggleFavorite();
 
   // Find the favorite entry for this hotel
-  const favoriteEntry = favoritesData?.find((fav: any) => fav.hotel.id === Number(hotelId));
+  const favoriteEntry = favoritesData?.find(
+    (fav: any) => fav.hotel.id === Number(hotelId)
+  );
   const isFavorited = !!favoriteEntry;
   const favoriteId = favoriteEntry?.id;
 
@@ -74,12 +76,12 @@ const HotelDetailsPage = () => {
   // Helper function to handle room booking
   const handleBookRoom = (roomId: string) => {
     if (!user) {
-      navigate('/login', { 
-        state: { from: `/hotel/${hotelId}/room/${roomId}/book` }
+      navigate("/login", {
+        state: { from: `/hotel/${hotelId}/room/${roomId}/book` },
       });
       return;
     }
-    if (user.role === 'HOTEL') {
+    if (user.role === "HOTEL") {
       return; // Hotel users cannot book
     }
     navigate(`/hotel/${hotelId}/room/${roomId}/book`);
@@ -118,7 +120,7 @@ const HotelDetailsPage = () => {
         <div className="absolute inset-0">
           {hotel.images?.[0]?.image && (
             <img
-              src={`${BACKEND_URL}${hotel.images[0].image}`}
+              src={getImageUrl(hotel.images[0].image)}
               alt={hotel.name}
               className="w-full h-full object-cover opacity-60"
             />
@@ -288,20 +290,19 @@ const HotelDetailsPage = () => {
                               <button
                                 onClick={() => handleBookRoom(room.id)}
                                 className={`px-6 py-2 rounded-lg transition-colors ${
-                                  !user 
-                                    ? 'bg-blue-500 text-white hover:bg-blue-600'
-                                    : user.role === 'HOTEL'
-                                    ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                                  !user
+                                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                                    : user.role === "HOTEL"
+                                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                    : "bg-blue-500 text-white hover:bg-blue-600"
                                 }`}
-                                disabled={user?.role === 'HOTEL'}
+                                disabled={user?.role === "HOTEL"}
                               >
-                                {!user 
-                                  ? 'Login to Book'
-                                  : user.role === 'HOTEL'
-                                  ? 'Hotels Cannot Book'
-                                  : 'Book Now'
-                                }
+                                {!user
+                                  ? "Login to Book"
+                                  : user.role === "HOTEL"
+                                  ? "Hotels Cannot Book"
+                                  : "Book Now"}
                               </button>
                             </div>
                           </div>
@@ -388,12 +389,12 @@ const HotelDetailsPage = () => {
                   />
                 )}
                 <span className={isFavorited ? "text-red-500" : ""}>
-                  {isSaving 
-                    ? "Saving..." 
-                    : favoritesLoading 
-                    ? "Loading..." 
-                    : isFavorited 
-                    ? "Saved" 
+                  {isSaving
+                    ? "Saving..."
+                    : favoritesLoading
+                    ? "Loading..."
+                    : isFavorited
+                    ? "Saved"
                     : "Save"}
                 </span>
               </button>
