@@ -138,8 +138,6 @@ class MyHotelView(viewsets.ViewSet):
             
             if serializer.is_valid():
                 serializer.save()
-
-                # Handle updating features from a comma-separated list of names
                 features_input = request.data.get('features')
                 if features_input is not None:
                     try:
@@ -148,18 +146,14 @@ class MyHotelView(viewsets.ViewSet):
                         else:
                             feature_names = [name.strip() for name in str(features_input).split(',') if name.strip()]
 
-                        # Create or fetch Feature objects for non-amenities
                         non_amenity_features = []
                         for name in feature_names:
                             feature_obj, _ = Feature.objects.get_or_create(
                                 name=name,
                                 defaults={'is_amenity': False}
                             )
-                            # If an existing amenity with same name exists but marked as amenity,
-                            # we keep its current is_amenity flag.
                             non_amenity_features.append(feature_obj)
 
-                        # Preserve existing amenities and only replace non-amenity features
                         existing_amenities = hotel.features.filter(is_amenity=True)
                         combined_features = list(existing_amenities) + non_amenity_features
                         hotel.features.set(combined_features)
